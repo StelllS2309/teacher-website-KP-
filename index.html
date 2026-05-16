@@ -489,8 +489,8 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
     <button class="btn btn-primary" onclick="printKPs()">🖨 Печать / PDF</button>
     <button class="btn btn-secondary" onclick="exportExcel()">📊 Выгрузить в Excel</button>
     <div class="sep"></div>
-    <button class="btn btn-secondary" id="btn-save" onclick="saveFormData()">💾 Сохранить в браузере</button>
-    <button class="btn btn-secondary" onclick="downloadFormData()">⬇ Скачать данные (JSON)</button>
+    <span id="autosave-badge" style="font-size:13px;color:#34c759;opacity:0;transition:opacity 0.4s;font-weight:500;white-space:nowrap;align-self:center"></span>
+    <button class="btn btn-secondary" onclick="downloadFormData()">⬇ Скачать резервную копию</button>
     <button class="btn btn-ghost" onclick="document.getElementById('upload-json').click()">⬆ Загрузить данные</button>
     <input type="file" id="upload-json" accept=".json" style="display:none" onchange="handleUploadJSON(event)">
     <div class="sep"></div>
@@ -753,6 +753,7 @@ function handleLogoUpload(e) {
     document.getElementById('logo-filename').textContent = file.name;
     document.getElementById('logo-area').classList.add('has-logo');
     refreshPreview();
+    autoSave();
   };
   reader.readAsDataURL(file);
   e.target.value = '';
@@ -843,6 +844,7 @@ function handleProductPhoto(e, idx) {
   reader.onload = ev => {
     productPhotos[idx] = ev.target.result;
     setPhotoThumb(idx, ev.target.result);
+    autoSave();
   };
   reader.readAsDataURL(file);
   e.target.value = '';
@@ -892,6 +894,7 @@ function calculateAll() {
   });
 
   refreshPreview();
+  autoSave();
 }
 
 // ═══════════════════════════════════════════════
@@ -1107,7 +1110,44 @@ function exportExcel() {
 // SAVE / LOAD / CLEAR
 // ═══════════════════════════════════════════════
 
-function onFormInput() { calculateAll(); }
+// ─── АВТОСОХРАНЕНИЕ ───────────────────────────────
+let _saveTimer = null;
+
+function autoSave() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem('kp_form_data', JSON.stringify(getFullState()));
+      setAutoSaveIndicator('saved');
+    } catch(e) {
+      setAutoSaveIndicator('error');
+    }
+  }, 600);
+  setAutoSaveIndicator('pending');
+}
+
+function setAutoSaveIndicator(state) {
+  const el = document.getElementById('autosave-badge');
+  if (!el) return;
+  const map = {
+    saved:   { text: '✓ Сохранено',          color: '#34c759' },
+    pending: { text: '● Сохранение...',       color: '#aaa'    },
+    error:   { text: '⚠ Не удалось сохранить', color: '#ff3b30' }
+  };
+  const s = map[state] || map.saved;
+  el.textContent = s.text;
+  el.style.color = s.color;
+  if (state === 'saved') {
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.opacity = '0'; }, 2500);
+    el.style.opacity = '1';
+  } else {
+    el.style.opacity = '1';
+  }
+}
+// ──────────────────────────────────────────────────
+
+function onFormInput() { calculateAll(); autoSave(); }
 
 function getFullState() {
   const fd = getFormData();
@@ -1142,11 +1182,7 @@ function applyState(state) {
 
 function saveFormData() {
   localStorage.setItem('kp_form_data', JSON.stringify(getFullState()));
-  const btn = document.getElementById('btn-save');
-  const orig = btn.textContent;
-  btn.textContent = '✓ Сохранено';
-  btn.disabled = true;
-  setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1600);
+  setAutoSaveIndicator('saved');
 }
 
 function downloadFormData() {
