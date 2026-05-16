@@ -283,10 +283,12 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
   <!-- Supplier 0 -->
   <div class="supplier-panel active" id="sp-0">
     <div class="saved-row">
-      <select id="saved-sel-0"><option value="">— Выбрать сохранённое юрлицо —</option></select>
-      <button class="btn btn-secondary btn-sm" onclick="loadSavedSupplier(0)">Загрузить</button>
+      <select id="saved-sel-0" onchange="autoLoadSupplier(0)"><option value="">— Выбрать сохранённое юрлицо —</option></select>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sup-file-0').click()" title="Загрузить реквизиты из JSON-файла">⬆ Загрузить</button>
+      <input type="file" id="sup-file-0" accept=".json" style="display:none" onchange="handleSupplierFile(event,0)">
       <button class="btn btn-secondary btn-sm" onclick="saveSupplier(0)">💾 Сохранить</button>
       <button class="btn btn-ghost btn-sm" onclick="deleteSavedSupplier(0)">Удалить</button>
+      <button class="btn btn-ghost btn-sm" onclick="downloadSupplierTemplate()" title="Скачать шаблон JSON">📄 Шаблон</button>
     </div>
     <div class="form-grid">
       <div class="fg span-full"><label>Наименование организации</label><input type="text" id="s0-name" placeholder='ООО "Мебель Плюс"' oninput="onFormInput()"></div>
@@ -307,8 +309,9 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
   <!-- Supplier 1 -->
   <div class="supplier-panel" id="sp-1">
     <div class="saved-row">
-      <select id="saved-sel-1"><option value="">— Выбрать сохранённое юрлицо —</option></select>
-      <button class="btn btn-secondary btn-sm" onclick="loadSavedSupplier(1)">Загрузить</button>
+      <select id="saved-sel-1" onchange="autoLoadSupplier(1)"><option value="">— Выбрать сохранённое юрлицо —</option></select>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sup-file-1').click()" title="Загрузить реквизиты из JSON-файла">⬆ Загрузить</button>
+      <input type="file" id="sup-file-1" accept=".json" style="display:none" onchange="handleSupplierFile(event,1)">
       <button class="btn btn-secondary btn-sm" onclick="saveSupplier(1)">💾 Сохранить</button>
       <button class="btn btn-ghost btn-sm" onclick="deleteSavedSupplier(1)">Удалить</button>
     </div>
@@ -331,8 +334,9 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
   <!-- Supplier 2 -->
   <div class="supplier-panel" id="sp-2">
     <div class="saved-row">
-      <select id="saved-sel-2"><option value="">— Выбрать сохранённое юрлицо —</option></select>
-      <button class="btn btn-secondary btn-sm" onclick="loadSavedSupplier(2)">Загрузить</button>
+      <select id="saved-sel-2" onchange="autoLoadSupplier(2)"><option value="">— Выбрать сохранённое юрлицо —</option></select>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sup-file-2').click()" title="Загрузить реквизиты из JSON-файла">⬆ Загрузить</button>
+      <input type="file" id="sup-file-2" accept=".json" style="display:none" onchange="handleSupplierFile(event,2)">
       <button class="btn btn-secondary btn-sm" onclick="saveSupplier(2)">💾 Сохранить</button>
       <button class="btn btn-ghost btn-sm" onclick="deleteSavedSupplier(2)">Удалить</button>
     </div>
@@ -631,14 +635,93 @@ function saveSupplier(idx) {
   alert('Юрлицо «' + data.name + '» сохранено');
 }
 
-function loadSavedSupplier(idx) {
+// Автозагрузка при выборе из дропдауна
+function autoLoadSupplier(idx) {
   const sel = document.getElementById('saved-sel-' + idx);
   const i = parseInt(sel.value);
-  if (isNaN(i)) { alert('Выберите юрлицо из списка'); return; }
+  if (isNaN(i)) return;
   const saved = getSaved();
   if (!saved[i]) return;
   fillSupplier(idx, saved[i]);
   onFormInput();
+  showLoadToast('Реквизиты загружены: ' + (saved[i].name || ''));
+}
+
+// Старая функция (оставлена для совместимости)
+function loadSavedSupplier(idx) {
+  autoLoadSupplier(idx);
+}
+
+// Загрузка реквизитов из JSON-файла
+function handleSupplierFile(e, idx) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const raw = JSON.parse(ev.target.result);
+      // Нормализуем ключи — поддерживаем разные названия полей
+      const map = {
+        name:      raw.name      || raw['Наименование']       || raw['organization'] || '',
+        inn:       raw.inn       || raw['ИНН']                || raw['INN']          || '',
+        kpp:       raw.kpp       || raw['КПП']                || raw['KPP']          || '',
+        ogrn:      raw.ogrn      || raw['ОГРН']               || raw['OGRN']         || raw['ОГРНИП'] || '',
+        address:   raw.address   || raw['Адрес']              || raw['address_legal'] || '',
+        phone:     raw.phone     || raw['Телефон']            || raw['tel']          || '',
+        email:     raw.email     || raw['Email']              || raw['mail']         || '',
+        bank:      raw.bank      || raw['Банк']               || raw['bank_name']    || '',
+        bik:       raw.bik       || raw['БИК']                || raw['BIK']          || '',
+        account:   raw.account   || raw['Расчётный счёт']     || raw['rs']           || raw['r_account'] || '',
+        corr:      raw.corr      || raw['Корреспондентский счёт'] || raw['ks']       || raw['k_account'] || '',
+        signatory: raw.signatory || raw['Подписант']          || raw['director']     || raw['Директор'] || ''
+      };
+      fillSupplier(idx, map);
+      onFormInput();
+      showLoadToast('Реквизиты загружены из файла: ' + (map.name || file.name));
+    } catch(err) {
+      alert('Ошибка чтения файла.\n\nУбедитесь, что файл в формате JSON.\nПример структуры — кнопка «Шаблон».');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// Скачать шаблон JSON с пояснениями
+function downloadSupplierTemplate() {
+  const template = {
+    "name":      "ООО «Название организации»",
+    "inn":       "0000000000",
+    "kpp":       "000000000",
+    "ogrn":      "0000000000000",
+    "address":   "г. Город, ул. Улица, д. 1, оф. 1",
+    "phone":     "+7 (000) 000-00-00",
+    "email":     "info@example.ru",
+    "bank":      "ПАО «Название банка»",
+    "bik":       "000000000",
+    "account":   "00000000000000000000",
+    "corr":      "00000000000000000000",
+    "signatory": "Директор Иванов Иван Иванович"
+  };
+  const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'шаблон_реквизитов.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Всплывающая подсказка после загрузки
+function showLoadToast(msg) {
+  let toast = document.getElementById('load-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'load-toast';
+    toast.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.2);transition:opacity 0.3s';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = '✓ ' + msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 2800);
 }
 
 function deleteSavedSupplier(idx) {
