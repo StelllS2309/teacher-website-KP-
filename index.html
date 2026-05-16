@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Генератор коммерческих предложений</title>
+<style>
+
+:root {
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --border: #e5e5ea;
+  --text: #1d1d1f;
+  --muted: #6e6e73;
+  --accent: #0071e3;
+  --accent-h: #0077ed;
+  --accent-l: #e8f2fd;
+  --danger: #ff3b30;
+  --shadow: 0 2px 20px rgba(0,0,0,0.07);
+  --r: 16px;
+  --r-sm: 8px;
+  --f: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--f);
+  background: linear-gradient(180deg, #EBE4F6 0%, #F3EFFA 30%, #F7F5FB 55%, #F5F5F7 100%);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+.card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); padding: 32px; margin-bottom: 20px; }
+
+/* Typography */
+h1 { font-size: 44px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.1; }
+h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.2px; }
+.muted { color: var(--muted); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: var(--r-sm); border: none; cursor: pointer;
+  font-family: var(--f); font-size: 14px; font-weight: 500;
+  transition: all 0.18s ease; white-space: nowrap; text-decoration: none;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-h); box-shadow: 0 4px 14px rgba(0,113,227,.3); transform: translateY(-1px); }
+.btn-secondary { background: #fff; color: var(--text); border: 1.5px solid var(--border); }
+.btn-secondary:hover { background: #f5f5f7; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: #aaa; }
+.btn-sm { padding: 7px 14px; font-size: 13px; }
+.btn-danger-ghost { background: transparent; color: var(--danger); border: 1.5px solid #fcc; }
+.btn-danger-ghost:hover { background: #fff2f1; }
+
+/* Forms */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fg label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.span-full { grid-column: 1 / -1; }
+
+input[type=text], input[type=email], input[type=tel],
+input[type=number], input[type=date], select, textarea {
+  padding: 9px 12px; border: 1.5px solid var(--border); border-radius: var(--r-sm);
+  font-family: var(--f); font-size: 14px; color: var(--text);
+  background: #fff; outline: none; width: 100%; transition: border-color 0.18s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 72px; }
+input[type=number] { -moz-appearance: textfield; }
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, #3A1870 0%, #5E2EA0 38%, #8E52C8 72%, #B47FD8 100%);
+  border-bottom: none;
+  padding: 32px 0 72px;
+}
+.hero-logo-wrap { margin-bottom: 44px; }
+.hero-logo-svg { height: 56px; width: auto; display: block; }
+.hero-badge { display: inline-block; margin-bottom: 18px; padding: 5px 16px; background: rgba(255,255,255,0.18); color: #fff; border-radius: 20px; font-size: 13px; font-weight: 600; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.25); }
+.hero h1 { margin-bottom: 16px; color: #fff; text-shadow: 0 2px 24px rgba(0,0,0,0.18); }
+.hero-sub { font-size: 18px; color: rgba(255,255,255,0.82); margin-bottom: 36px; max-width: 480px; }
+.btn-hero { background: #F36929; color: #fff; font-size: 15px; padding: 13px 28px; }
+.btn-hero:hover { background: #e05620; box-shadow: 0 6px 24px rgba(243,105,41,0.45); transform: translateY(-2px); }
+
+/* Section header */
+.sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.sec-title { display: flex; align-items: center; gap: 10px; }
+.step { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: var(--accent); color: #fff; border-radius: 50%; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+
+.divider-h { height: 1px; background: var(--border); margin: 24px 0; }
+
+/* Supplier tabs */
+.stabs { display: flex; gap: 8px; margin-bottom: 24px; }
+.stab { flex: 1; padding: 11px 8px; border-radius: var(--r-sm); border: 1.5px solid var(--border); background: #fff; cursor: pointer; font-family: var(--f); font-size: 13px; font-weight: 500; color: var(--muted); text-align: center; transition: all 0.18s; }
+.stab.active { border-color: var(--accent); background: var(--accent-l); color: var(--accent); }
+.supplier-panel { display: none; }
+.supplier-panel.active { display: block; }
+.saved-row { display: flex; gap: 8px; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.saved-row select { flex: 1; }
+
+/* Logo */
+.logo-area { border: 2px dashed var(--border); border-radius: var(--r); padding: 32px; text-align: center; cursor: pointer; transition: all 0.18s; }
+.logo-area:hover { border-color: var(--accent); background: var(--accent-l); }
+.logo-area.has-logo { padding: 20px; }
+.logo-preview-img { max-height: 72px; max-width: 200px; object-fit: contain; }
+
+/* Products table */
+.table-wrap { overflow-x: auto; border-radius: var(--r-sm); border: 1px solid var(--border); }
+table.pt { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.pt th { text-align: left; padding: 10px 8px; background: #f5f5f7; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1.5px solid var(--border); }
+table.pt td { padding: 6px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.pt tr:last-child td { border-bottom: none; }
+.photo-cell { width: 58px; text-align: center; padding: 6px !important; }
+.photo-btn { width: 46px; height: 46px; border-radius: 6px; border: 1.5px dashed var(--border); background: #fafafa; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); font-size: 20px; transition: all 0.18s; overflow: hidden; }
+.photo-btn:hover { border-color: var(--accent); color: var(--accent); }
+.photo-btn img { width: 100%; height: 100%; object-fit: cover; }
+table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radius: 6px; }
+.col-name { min-width: 160px; }
+.col-unit { width: 100px; }
+.col-qty { width: 72px; }
+.col-price { width: 110px; }
+.col-vat { width: 120px; }
+.col-sum { width: 110px; text-align: right; font-weight: 600; padding-right: 10px !important; white-space: nowrap; }
+.col-del { width: 38px; text-align: center; }
+.del-btn { background: none; border: none; cursor: pointer; color: #ccc; font-size: 17px; padding: 4px 6px; transition: color 0.18s; border-radius: 4px; }
+.del-btn:hover { color: var(--danger); background: #fff2f1; }
+.table-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+
+/* Totals */
+.totals-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.tot-card { background: #fff; border-radius: var(--r); box-shadow: var(--shadow); padding: 24px; text-align: center; }
+.tot-card .kp-lbl { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
+.tot-card .amount { font-size: 21px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.tot-card .meta { font-size: 12px; color: var(--muted); line-height: 1.8; }
+
+/* Preview tabs */
+.ptabs { display: flex; gap: 4px; background: #f0f0f5; padding: 4px; border-radius: 10px; width: fit-content; margin-bottom: 24px; }
+.ptab { padding: 7px 18px; border-radius: 7px; border: none; background: transparent; cursor: pointer; font-family: var(--f); font-size: 13px; font-weight: 500; color: var(--muted); transition: all 0.18s; }
+.ptab.active { background: #fff; color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+.preview-wrap { background: #e0e0ea; border-radius: var(--r); padding: 32px; min-height: 400px; }
+.preview-panel { display: none; }
+.preview-panel.active { display: block; }
+
+/* KP Document */
+.kp-doc {
+  background: #fff; max-width: 780px; margin: 0 auto;
+  padding: 48px 56px; font-size: 12.5px; line-height: 1.65; color: #1a1a1a;
+  box-shadow: 0 4px 30px rgba(0,0,0,.12); border-radius: 3px;
+  font-family: 'Times New Roman', Times, Georgia, serif;
+}
+.kp-doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 2px solid #222; }
+.kp-doc-logo { max-height: 60px; max-width: 150px; object-fit: contain; }
+.kp-doc-sup { text-align: right; font-size: 11px; line-height: 1.7; max-width: 260px; }
+.kp-doc-title { text-align: center; margin: 20px 0 6px; font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.kp-doc-num { text-align: center; font-size: 12px; margin-bottom: 20px; color: #444; }
+.kp-doc-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 16px; font-size: 12px; }
+.party-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 3px; }
+.kp-doc-preambule { margin: 14px 0; padding: 10px 14px; background: #f8f8f8; border-left: 3px solid #ccc; font-size: 12px; font-style: italic; }
+.kp-doc-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 11.5px; }
+.kp-doc-table th { border: 1px solid #888; padding: 6px 8px; background: #f0f0f0; font-weight: 700; text-align: center; }
+.kp-doc-table td { border: 1px solid #ccc; padding: 5px 8px; vertical-align: middle; }
+.kp-doc-table .tc { text-align: center; }
+.kp-doc-table .tr { text-align: right; }
+.kp-doc-table .tb { font-weight: 700; }
+.kp-doc-table .total-row { background: #f5f5f5; font-weight: 700; }
+.kp-doc-cond { margin: 16px 0; font-size: 12px; border-collapse: collapse; width: 100%; }
+.kp-doc-cond td { padding: 3px 0; vertical-align: top; }
+.kp-doc-cond .cl { font-weight: 700; width: 210px; }
+.kp-doc-sign { display: flex; justify-content: flex-end; margin-top: 30px; }
+.kp-doc-sign-block { width: 240px; text-align: center; }
+.kp-doc-sign-line { border-bottom: 1px solid #333; padding-bottom: 28px; margin-bottom: 4px; }
+.kp-doc-sign-name { font-size: 11px; color: #444; }
+.kp-photo-thumb { width: 38px; height: 38px; object-fit: cover; border-radius: 3px; vertical-align: middle; margin-right: 6px; }
+
+/* Actions */
+.actions-card { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.sep { width: 1px; height: 30px; background: var(--border); margin: 0 2px; }
+
+/* Print */
+#print-area { display: none; }
+
+@media print {
+  body > *:not(#print-area) { display: none !important; }
+  #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
+  .kp-print-page {
+    padding: 18mm 20mm; page-break-after: always;
+    font-family: 'Times New Roman', Times, serif; font-size: 12px;
+    line-height: 1.6; color: #000; background: #fff;
+  }
+  .kp-print-page:last-child { page-break-after: auto; }
+  .kp-doc-table { width: 100%; border-collapse: collapse; }
+  .kp-doc-table th, .kp-doc-table td { border: 1px solid #666; padding: 5px 7px; }
+  .kp-doc-table th { background: #eee !important; -webkit-print-color-adjust: exact; }
+}
+
+@media (max-width: 768px) {
+  h1 { font-size: 30px; }
+  .totals-grid { grid-template-columns: 1fr; }
+  .stabs { flex-direction: column; }
+  .kp-doc { padding: 24px; }
+  .kp-doc-parties { grid-template-columns: 1fr; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="container">
+    <div class="hero-logo-wrap">
+      <svg class="hero-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" xml:space="preserve">
+        <style>.hst0{fill:#F36929;}.hst1{fill:#FFFFFF;}</style>
+        <path class="hst0" d="M154.02,24.9v75.72c0,1.82-1.41,3.24-3.24,3.24h-13.26c-1.83,0-3.24-1.42-3.24-3.24V28.15c0-1.85-1.41-3.26-3.24-3.26H23.16c-1.83,0-3.24,1.41-3.24,3.26v72.46c0,1.82-1.41,3.24-3.24,3.24H3.41c-1.83,0-3.24-1.42-3.24-3.24V24.9c0-10.84,8.88-19.74,19.74-19.74h114.36C145.14,5.16,154.02,14.05,154.02,24.9z"/>
+        <path class="hst1" d="M168.12,24.9c0-10.85,8.89-19.74,19.74-19.74h59.23c10.86,0,19.74,8.88,19.74,19.74v75.7c0,1.83-1.41,3.24-3.24,3.24h-13.26c-1.83,0-3.24-1.41-3.24-3.24V87.35c0-1.83-1.41-3.24-3.24-3.24h-52.75c-1.83,0-3.24,1.41-3.24,3.24v13.25c0,1.83-1.41,3.24-3.24,3.24h-13.26c-1.83,0-3.24-1.41-3.24-3.24V24.9z M191.11,24.9c-1.83,0-3.24,1.41-3.24,3.24v32.99c0,1.83,1.41,3.24,3.24,3.24h52.75c1.83,0,3.24-1.41,3.24-3.24V28.15c0-1.83-1.41-3.24-3.24-3.24H191.11z"/>
+        <path class="hst1" d="M280.94,24.9c0-10.85,8.89-19.74,19.74-19.74h59.23c10.86,0,19.74,8.88,19.74,19.74v39.47c0,10.86-8.88,19.74-19.74,19.74h-55.99c-1.83,0-3.24,1.41-3.24,3.24v13.25c0,1.83-1.41,3.24-3.24,3.24h-13.26c-1.83,0-3.24-1.41-3.24-3.24V24.9z M303.93,24.9c-1.83,0-3.24,1.41-3.24,3.24v32.99c0,1.83,1.41,3.24,3.24,3.24h52.75c1.83,0,3.24-1.41,3.24-3.24V28.15c0-1.83-1.41-3.24-3.24-3.24H303.93z"/>
+        <path class="hst1" d="M394.33,5.17h92.23c1.83,0,3.24,1.41,3.24,3.24v13.25c0,1.83-1.41,3.24-3.24,3.24h-33c-1.83,0-3.24,1.41-3.24,3.24v72.46c0,1.83-1.41,3.24-3.24,3.24h-13.26c-1.83,0-3.24-1.41-3.24-3.24V28.15c0-1.83-1.41-3.24-3.24-3.24h-33c-1.83,0-3.24-1.41-3.24-3.24V8.41C391.08,6.58,392.49,5.17,394.33,5.17z"/>
+        <path class="hst1" d="M501.23,24.9c0-10.85,8.88-19.74,19.74-19.74h59.23c10.86,0,19.74,8.88,19.74,19.74v75.7c0,1.83-1.41,3.24-3.24,3.24h-13.26c-1.83,0-3.24-1.41-3.24-3.24V87.35c0-1.83-1.41-3.24-3.24-3.24h-52.75c-1.83,0-3.24,1.41-3.24,3.24v13.25c0,1.83-1.41,3.24-3.24,3.24h-13.26c-1.83,0-3.24-1.41-3.24-3.24V24.9z M524.22,24.9c-1.83,0-3.24,1.41-3.24,3.24v32.99c0,1.83,1.41,3.24,3.24,3.24h52.75c1.83,0,3.24-1.41,3.24-3.24V28.15c0-1.83-1.41-3.24-3.24-3.24H524.22z"/>
+        <path class="hst1" d="M0,181.35c0-1.5,1.15-2.65,2.65-2.65h51.21c1.5,0,2.65-1.15,2.65-2.65V165.2c0-1.5-1.15-2.65-2.65-2.65H2.65c-1.5,0-2.65-1.15-2.65-2.65v-10.84c0-1.5,1.15-2.65,2.65-2.65h51.21c1.5,0,2.65-1.15,2.65-2.65V132.9c0-1.5-1.15-2.65-2.65-2.65H2.65c-1.5,0-2.65-1.15-2.65-2.65v-10.84c0-1.5,1.15-2.65,2.65-2.65h53.86c8.88,0,16.15,7.27,16.15,16.15v48.44c0,8.88-7.27,16.15-16.15,16.15H2.65c-1.5,0-2.65-1.15-2.65-2.65V181.35z"/>
+        <path class="hst1" d="M84.31,116.76c0-1.5,1.15-2.65,2.65-2.65h10.84c1.5,0,2.65,1.15,2.65,2.65v26.99c0,1.5,1.15,2.65,2.65,2.65h10.03c1.73,0,3.34-0.69,4.38-2.08l24.45-28.14c1.04-1.38,2.65-2.08,4.38-2.08h16.03c0.46,0,0.92,0.23,1.04,0.69c0.23,0.46,0.12,0.92-0.12,1.38l-31.37,36.22c-1.04,1.15-1.04,3,0,4.15l31.37,36.22c0.23,0.46,0.35,0.92,0.12,1.38c-0.12,0.46-0.58,0.69-1.04,0.69h-16.03c-1.73,0-3.34-0.69-4.38-2.08l-24.45-28.14c-1.04-1.38-2.65-2.08-4.38-2.08h-10.03c-1.5,0-2.65,1.15-2.65,2.65v26.99c0,1.5-1.15,2.65-2.65,2.65H86.97c-1.5,0-2.65-1.15-2.65-2.65V116.76z"/>
+        <path class="hst1" d="M168.28,130.25c0-8.88,7.27-16.15,16.15-16.15h53.86c1.5,0,2.65,1.15,2.65,2.65v10.84c0,1.5-1.15,2.65-2.65,2.65h-51.21c-1.5,0-2.65,1.15-2.65,2.65v43.14c0,1.5,1.15,2.65,2.65,2.65h51.21c1.5,0,2.65,1.15,2.65,2.65v10.84c0,1.5-1.15,2.65-2.65,2.65h-53.86c-8.88,0-16.15-7.27-16.15-16.15V130.25z"/>
+        <path class="hst1" d="M268.74,114.1h48.44c8.88,0,16.15,7.27,16.15,16.15v61.94c0,1.5-1.15,2.65-2.65,2.65h-10.84c-1.5,0-2.65-1.15-2.65-2.65V132.9c0-1.5-1.15-2.65-2.65-2.65H271.4c-1.5,0-2.65,1.15-2.65,2.65v59.28c0,1.5-1.15,2.65-2.65,2.65h-10.84c-1.5,0-2.65-1.15-2.65-2.65v-61.94C252.6,121.37,259.86,114.1,268.74,114.1z"/>
+        <path class="hst1" d="M344.87,130.25c0-8.88,7.27-16.15,16.15-16.15h53.86c1.5,0,2.65,1.15,2.65,2.65v10.84c0,1.5-1.15,2.65-2.65,2.65h-51.21c-1.5,0-2.65,1.15-2.65,2.65v10.84c0,1.5,1.15,2.65,2.65,2.65h51.21c1.5,0,2.65,1.15,2.65,2.65v10.84c0,1.5-1.15,2.65-2.65,2.65h-51.21c-1.5,0-2.65,1.15-2.65,2.65v10.84c0,1.5,1.15,2.65,2.65,2.65h51.21c1.5,0,2.65,1.15,2.65,2.65v10.84c0,1.5-1.15,2.65-2.65,2.65h-53.86c-8.88,0-16.15-7.27-16.15-16.15V130.25z"/>
+        <path class="hst1" d="M429.18,130.25c0-8.88,7.27-16.15,16.15-16.15h48.44c8.88,0,16.15,7.27,16.15,16.15v32.29c0,8.88-7.27,16.15-16.15,16.15h-45.79c-1.5,0-2.65,1.15-2.65,2.65v10.84c0,1.5-1.15,2.65-2.65,2.65h-10.84c-1.5,0-2.65-1.15-2.65-2.65V130.25z M447.98,130.25c-1.5,0-2.65,1.15-2.65,2.65v26.99c0,1.5,1.15,2.65,2.65,2.65h43.14c1.5,0,2.65-1.15,2.65-2.65V132.9c0-1.5-1.15-2.65-2.65-2.65H447.98z"/>
+        <path class="hst1" d="M521.92,114.1h75.43c1.5,0,2.65,1.15,2.65,2.65v10.84c0,1.5-1.15,2.65-2.65,2.65h-26.99c-1.5,0-2.65,1.15-2.65,2.65v59.28c0,1.5-1.15,2.65-2.65,2.65h-10.84c-1.5,0-2.65-1.15-2.65-2.65V132.9c0-1.5-1.15-2.65-2.65-2.65h-26.99c-1.5,0-2.65-1.15-2.65-2.65v-10.84C519.26,115.26,520.42,114.1,521.92,114.1z"/>
+      </svg>
+    </div>
+    <div class="hero-badge">Инструмент поставщика</div>
+    <h1>Генератор<br>коммерческих предложений</h1>
+    <p class="hero-sub">Создайте три КП для школ, детских садов и бюджетных учреждений за несколько минут.</p>
+    <button class="btn btn-hero" onclick="document.getElementById('sec-customer').scrollIntoView({behavior:'smooth'})">
+      Создать КП →
+    </button>
+  </div>
+</div>
+
+<div class="container" style="padding-top:40px">
+
+<!-- 1. CUSTOMER -->
+<div class="card" id="sec-customer">
+  <div class="sec-head">
+    <div class="sec-title"><span class="step">1</span><h2>Данные заказчика</h2></div>
+  </div>
+  <div class="form-grid">
+    <div class="fg"><label>ИНН заказчика</label><input type="text" id="c-inn" placeholder="0000000000" maxlength="12" oninput="onFormInput()"></div>
+    <div class="fg"><label>Наименование заказчика</label><input type="text" id="c-name" placeholder='МБОУ «Школа №1»' oninput="onFormInput()"></div>
+    <div class="fg"><label>Адрес заказчика</label><input type="text" id="c-address" placeholder="г. Москва, ул. Ленина, д. 1" oninput="onFormInput()"></div>
+    <div class="fg"><label>Контактное лицо</label><input type="text" id="c-contact" placeholder="Иванова Мария Ивановна" oninput="onFormInput()"></div>
+    <div class="fg"><label>Дата КП</label><input type="date" id="c-date" onchange="onDateChange()"></div>
+    <div class="fg"><label>Срок действия КП</label><input type="date" id="c-valid" oninput="onFormInput()"></div>
+  </div>
+  <div class="divider-h"></div>
+  <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+    <div class="fg" style="flex:1;min-width:200px">
+      <label>Номер КП</label>
+      <input type="text" id="kp-number" placeholder="КП-250517-001" oninput="onFormInput()">
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="generateKPNumber()">↻ Сгенерировать номер</button>
+  </div>
+</div>
+
+<!-- 2. SUPPLIERS -->
+<div class="card" id="sec-suppliers">
+  <div class="sec-head">
+    <div class="sec-title"><span class="step">2</span><h2>Юридические лица поставщика</h2></div>
+  </div>
+  <div class="stabs">
+    <button class="stab active" id="stab-0" onclick="showSupplier(0)">КП №1 — базовая цена</button>
+    <button class="stab" id="stab-1" onclick="showSupplier(1)">КП №2 — +2%</button>
+    <button class="stab" id="stab-2" onclick="showSupplier(2)">КП №3 — +4%</button>
+  </div>
+
+  <!-- Supplier 0 -->
+  <div class="supplier-panel active" id="sp-0">
+    <div class="saved-row">
+      <select id="saved-sel-0"><option value="">— Выбрать сохранённое юрлицо —</option></select>
+      <button class="btn btn-secondary btn-sm" onclick="loadSavedSupplier(0)">Загрузить</button>
+      <button class="btn btn-secondary btn-sm" onclick="saveSupplier(0)">💾 Сохранить</button>
+      <button class="btn btn-ghost btn-sm" onclick="deleteSavedSupplier(0)">Удалить</button>
+    </div>
+    <div class="form-grid">
+      <div class="fg span-full"><label>Наименование организации</label><input type="text" id="s0-name" placeholder='ООО "Мебель Плюс"' oninput="onFormInput()"></div>
+      <div class="fg"><label>ИНН</label><input type="text" id="s0-inn" placeholder="0000000000" maxlength="12" oninput="onFormInput()"></div>
+      <div class="fg"><label>КПП</label><input type="text" id="s0-kpp" placeholder="000000000" maxlength="9" oninput="onFormInput()"></div>
+      <div class="fg"><label>ОГРН / ОГРНИП</label><input type="text" id="s0-ogrn" placeholder="0000000000000" oninput="onFormInput()"></div>
+      <div class="fg span-full"><label>Юридический адрес</label><input type="text" id="s0-address" placeholder="г. Москва, ул. Примерная, д. 1" oninput="onFormInput()"></div>
+      <div class="fg"><label>Телефон</label><input type="tel" id="s0-phone" placeholder="+7 (000) 000-00-00" oninput="onFormInput()"></div>
+      <div class="fg"><label>Email</label><input type="email" id="s0-email" placeholder="info@company.ru" oninput="onFormInput()"></div>
+      <div class="fg"><label>Банк</label><input type="text" id="s0-bank" placeholder='ПАО «Сбербанк России»' oninput="onFormInput()"></div>
+      <div class="fg"><label>БИК</label><input type="text" id="s0-bik" placeholder="044525225" maxlength="9" oninput="onFormInput()"></div>
+      <div class="fg"><label>Расчётный счёт</label><input type="text" id="s0-account" placeholder="40702810000000000000" maxlength="20" oninput="onFormInput()"></div>
+      <div class="fg"><label>Корреспондентский счёт</label><input type="text" id="s0-corr" placeholder="30101810400000000225" maxlength="20" oninput="onFormInput()"></div>
+      <div class="fg span-full"><label>Подписант (Должность, ФИО)</label><input type="text" id="s0-signatory" placeholder="Директор Петров Пётр Петрович" oninput="onFormInput()"></div>
+    </div>
+  </div>
+
+  <!-- Supplier 1 -->
+  <div class="supplier-panel" id="sp-1">
+    <div class="saved-row">
+      <select id="saved-sel-1"><option value="">— Выбрать сохранённое юрлицо —</option></select>
+      <button class="btn btn-secondary btn-sm" onclick="loadSavedSupplier(1)">Загрузить</button>
+      <button class="btn btn-secondary btn-sm" onclick="saveSupplier(1)">💾 Сохранить</button>
+      <button class="btn btn-ghost btn-sm" onclick="deleteSavedSupplier(1)">Удалить</button>
+    </div>
+    <div class="form-grid">
+      <div class="fg span-full"><label>Наименование организации</label><input type="text" id="s1-name" oninput="onFormInput()"></div>
+      <div class="fg"><label>ИНН</label><input type="text" id="s1-inn" maxlength="12" oninput="onFormInput()"></div>
+      <div class="fg"><label>КПП</label><input type="text" id="s1-kpp" maxlength="9" oninput="onFormInput()"></div>
+      <div class="fg"><label>ОГРН / ОГРНИП</label><input type="text" id="s1-ogrn" oninput="onFormInput()"></div>
+      <div class="fg span-full"><label>Юридический адрес</label><input type="text" id="s1-address" oninput="onFormInput()"></div>
+      <div class="fg"><label>Телефон</label><input type="tel" id="s1-phone" oninput="onFormInput()"></div>
+      <div class="fg"><label>Email</label><input type="email" id="s1-email" oninput="onFormInput()"></div>
+      <div class="fg"><label>Банк</label><input type="text" id="s1-bank" oninput="onFormInput()"></div>
+      <div class="fg"><label>БИК</label><input type="text" id="s1-bik" maxlength="9" oninput="onFormInput()"></div>
+      <div class="fg"><label>Расчётный счёт</label><input type="text" id="s1-account" maxlength="20" oninput="onFormInput()"></div>
+      <div class="fg"><label>Корреспондентский счёт</label><input type="text" id="s1-corr" maxlength="20" oninput="onFormInput()"></div>
+      <div class="fg span-full"><label>Подписант (Должность, ФИО)</label><input type="text" id="s1-signatory" oninput="onFormInput()"></div>
+    </div>
+  </div>
+
+  <!-- Supplier 2 -->
+  <div class="supplier-panel" id="sp-2">
+    <div class="saved-row">
+      <select id="saved-sel-2"><option value="">— Выбрать сохранённое юрлицо —</option></select>
+      <button class="btn btn-secondary btn-sm" onclick="loadSavedSupplier(2)">Загрузить</button>
+      <button class="btn btn-secondary btn-sm" onclick="saveSupplier(2)">💾 Сохранить</button>
+      <button class="btn btn-ghost btn-sm" onclick="deleteSavedSupplier(2)">Удалить</button>
+    </div>
+    <div class="form-grid">
+      <div class="fg span-full"><label>Наименование организации</label><input type="text" id="s2-name" oninput="onFormInput()"></div>
+      <div class="fg"><label>ИНН</label><input type="text" id="s2-inn" maxlength="12" oninput="onFormInput()"></div>
+      <div class="fg"><label>КПП</label><input type="text" id="s2-kpp" maxlength="9" oninput="onFormInput()"></div>
+      <div class="fg"><label>ОГРН / ОГРНИП</label><input type="text" id="s2-ogrn" oninput="onFormInput()"></div>
+      <div class="fg span-full"><label>Юридический адрес</label><input type="text" id="s2-address" oninput="onFormInput()"></div>
+      <div class="fg"><label>Телефон</label><input type="tel" id="s2-phone" oninput="onFormInput()"></div>
+      <div class="fg"><label>Email</label><input type="email" id="s2-email" oninput="onFormInput()"></div>
+      <div class="fg"><label>Банк</label><input type="text" id="s2-bank" oninput="onFormInput()"></div>
+      <div class="fg"><label>БИК</label><input type="text" id="s2-bik" maxlength="9" oninput="onFormInput()"></div>
+      <div class="fg"><label>Расчётный счёт</label><input type="text" id="s2-account" maxlength="20" oninput="onFormInput()"></div>
+      <div class="fg"><label>Корреспондентский счёт</label><input type="text" id="s2-corr" maxlength="20" oninput="onFormInput()"></div>
+      <div class="fg span-full"><label>Подписант (Должность, ФИО)</label><input type="text" id="s2-signatory" oninput="onFormInput()"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. LOGO -->
+<div class="card" id="sec-logo">
+  <div class="sec-head">
+    <div class="sec-title"><span class="step">3</span><h2>Логотип поставщика</h2></div>
+    <span class="muted" style="font-size:13px">Необязательно · до 1 МБ</span>
+  </div>
+  <div class="logo-area" id="logo-area" onclick="document.getElementById('logo-file').click()">
+    <div id="logo-placeholder">
+      <div style="font-size:36px;margin-bottom:8px">🖼</div>
+      <div style="font-weight:500;margin-bottom:4px">Нажмите, чтобы загрузить логотип</div>
+      <div class="muted" style="font-size:13px">PNG, JPG, SVG — до 1 МБ</div>
+    </div>
+    <div id="logo-loaded" style="display:none">
+      <img id="logo-img" class="logo-preview-img" src="" alt="Логотип">
+      <div style="margin-top:12px;display:flex;justify-content:center;gap:10px;align-items:center">
+        <span id="logo-filename" class="muted" style="font-size:13px"></span>
+        <button class="btn btn-ghost btn-sm" onclick="removeLogo(event)">Удалить</button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
+</div>
+
+<!-- 4. PRODUCTS -->
+<div class="card" id="sec-products">
+  <div class="sec-head">
+    <div class="sec-title"><span class="step">4</span><h2>Таблица товаров</h2></div>
+    <button class="btn btn-primary btn-sm" onclick="addProduct()">+ Добавить позицию</button>
+  </div>
+  <div class="table-wrap">
+    <table class="pt" id="products-table">
+      <thead>
+        <tr>
+          <th class="photo-cell">Фото</th>
+          <th class="col-name">Наименование</th>
+          <th class="col-unit">Ед. изм.</th>
+          <th class="col-qty">Кол-во</th>
+          <th class="col-price">Цена, руб.</th>
+          <th class="col-vat">НДС</th>
+          <th class="col-sum">Сумма, руб.</th>
+          <th class="col-del"></th>
+        </tr>
+      </thead>
+      <tbody id="products-body"></tbody>
+    </table>
+  </div>
+  <div class="table-foot">
+    <button class="btn btn-secondary btn-sm" onclick="addProduct()">+ Добавить позицию</button>
+    <div style="text-align:right">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Итого КП №1</div>
+      <div style="font-size:20px;font-weight:700;color:var(--accent)" id="table-total">0,00 руб.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. DELIVERY -->
+<div class="card" id="sec-delivery">
+  <div class="sec-head">
+    <div class="sec-title"><span class="step">5</span><h2>Условия и преамбула</h2></div>
+  </div>
+  <div class="form-grid">
+    <div class="fg span-full">
+      <label>Условия поставки</label>
+      <textarea id="delivery-text" rows="2" placeholder="Доставка включена. Срок поставки — 30 рабочих дней с момента подписания договора." oninput="onFormInput()"></textarea>
+    </div>
+    <div class="fg">
+      <label>Сборка</label>
+      <select id="assembly" onchange="onFormInput()">
+        <option value="included">Сборка включена в стоимость</option>
+        <option value="separate">Сборка оплачивается отдельно</option>
+      </select>
+    </div>
+  </div>
+  <div class="divider-h"></div>
+  <div class="fg">
+    <label>Преамбула (вступительный текст КП)</label>
+    <textarea id="preambule" rows="3" oninput="onFormInput()"></textarea>
+  </div>
+</div>
+
+<!-- 6. TOTALS -->
+<div style="margin-bottom:20px" id="sec-totals">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <span class="step">6</span><h2>Итоги по трём КП</h2>
+  </div>
+  <div class="totals-grid">
+    <div class="tot-card">
+      <div class="kp-lbl">КП №1 — базовая цена</div>
+      <div class="amount" id="tot-1-amount">0,00 руб.</div>
+      <div class="meta" id="tot-1-meta">Позиций: 0 · Ед.: 0<br>НДС: 0,00 руб.</div>
+    </div>
+    <div class="tot-card">
+      <div class="kp-lbl">КП №2 — цена +2%</div>
+      <div class="amount" id="tot-2-amount">0,00 руб.</div>
+      <div class="meta" id="tot-2-meta">Позиций: 0 · Ед.: 0<br>НДС: 0,00 руб.</div>
+    </div>
+    <div class="tot-card">
+      <div class="kp-lbl">КП №3 — цена +4%</div>
+      <div class="amount" id="tot-3-amount">0,00 руб.</div>
+      <div class="meta" id="tot-3-meta">Позиций: 0 · Ед.: 0<br>НДС: 0,00 руб.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. PREVIEW -->
+<div class="card" id="sec-preview">
+  <div class="sec-head">
+    <div class="sec-title"><span class="step">7</span><h2>Предпросмотр КП</h2></div>
+    <button class="btn btn-secondary btn-sm" onclick="refreshPreview()">↻ Обновить</button>
+  </div>
+  <div class="ptabs">
+    <button class="ptab active" id="ptab-0" onclick="showPreview(0)">КП №1</button>
+    <button class="ptab" id="ptab-1" onclick="showPreview(1)">КП №2 (+2%)</button>
+    <button class="ptab" id="ptab-2" onclick="showPreview(2)">КП №3 (+4%)</button>
+  </div>
+  <div class="preview-wrap">
+    <div class="preview-panel active" id="pv-0"><div id="kp-doc-0"></div></div>
+    <div class="preview-panel" id="pv-1"><div id="kp-doc-1"></div></div>
+    <div class="preview-panel" id="pv-2"><div id="kp-doc-2"></div></div>
+  </div>
+</div>
+
+<!-- 8. ACTIONS -->
+<div class="card" style="margin-bottom:80px" id="sec-actions">
+  <div class="sec-head" style="margin-bottom:0">
+    <div class="sec-title"><span class="step">8</span><h2>Действия</h2></div>
+  </div>
+  <div class="divider-h"></div>
+  <div class="actions-card">
+    <button class="btn btn-primary" onclick="printKPs()">🖨 Печать / PDF</button>
+    <button class="btn btn-secondary" onclick="exportExcel()">📊 Выгрузить в Excel</button>
+    <div class="sep"></div>
+    <button class="btn btn-secondary" id="btn-save" onclick="saveFormData()">💾 Сохранить в браузере</button>
+    <button class="btn btn-secondary" onclick="downloadFormData()">⬇ Скачать данные (JSON)</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('upload-json').click()">⬆ Загрузить данные</button>
+    <input type="file" id="upload-json" accept=".json" style="display:none" onchange="handleUploadJSON(event)">
+    <div class="sep"></div>
+    <button class="btn btn-danger-ghost" onclick="clearFormConfirm()">🗑 Очистить форму</button>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- PRINT AREA -->
+<div id="print-area">
+  <div class="kp-print-page" id="print-kp-0"></div>
+  <div class="kp-print-page" id="print-kp-1"></div>
+  <div class="kp-print-page" id="print-kp-2"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+
+let products = [];
+let logoBase64 = null;
+let productPhotos = {}; // { rowIndex: base64 }
+
+const DEFAULT_PREAMBULE = 'Уважаемый руководитель! Предлагаем Вам рассмотреть наше коммерческое предложение на поставку школьной мебели. Мы готовы обеспечить высокое качество продукции, своевременную доставку и профессиональную сборку в установленные сроки.';
+
+// ═══════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════
+
+function r2(n) { return Math.round(n * 100) / 100; }
+
+function fmtMoney(n) {
+  return n.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' руб.';
+}
+
+function fmtMoneyRaw(n) {
+  return n.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(val) {
+  if (!val) return '';
+  const [y, m, d] = val.split('-');
+  return d + '.' + m + '.' + y;
+}
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function esc(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function escNl(s) {
+  return esc(s).replace(/\n/g, '<br>');
+}
+
+function gv(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+// ═══════════════════════════════════════════════
+// KP NUMBER
+// ═══════════════════════════════════════════════
+
+function generateKPNumber() {
+  const dateVal = gv('c-date') || todayISO();
+  const [y, m, d] = dateVal.split('-');
+  const datePart = y.slice(2) + m + d;
+  const key = 'kp_cnt_' + datePart;
+  let cnt = parseInt(localStorage.getItem(key) || '0') + 1;
+  localStorage.setItem(key, cnt);
+  document.getElementById('kp-number').value = 'КП-' + datePart + '-' + String(cnt).padStart(3, '0');
+  onFormInput();
+}
+
+function onDateChange() {
+  generateKPNumber();
+}
+
+// ═══════════════════════════════════════════════
+// SUPPLIER TABS
+// ═══════════════════════════════════════════════
+
+function showSupplier(idx) {
+  [0, 1, 2].forEach(i => {
+    document.getElementById('stab-' + i).classList.toggle('active', i === idx);
+    document.getElementById('sp-' + i).classList.toggle('active', i === idx);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// SAVED SUPPLIERS
+// ═══════════════════════════════════════════════
+
+function getSaved() { return JSON.parse(localStorage.getItem('saved_suppliers') || '[]'); }
+function setSaved(arr) { localStorage.setItem('saved_suppliers', JSON.stringify(arr)); }
+
+function refreshSavedSelects() {
+  const saved = getSaved();
+  [0, 1, 2].forEach(i => {
+    const sel = document.getElementById('saved-sel-' + i);
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Выбрать сохранённое юрлицо —</option>' +
+      saved.map((s, idx) => `<option value="${idx}">${esc(s.name || 'Юрлицо ' + (idx + 1))}</option>`).join('');
+    if (prev) sel.value = prev;
+  });
+}
+
+function readSupplier(idx) {
+  const f = k => gv('s' + idx + '-' + k);
+  return { name: f('name'), inn: f('inn'), kpp: f('kpp'), ogrn: f('ogrn'), address: f('address'), phone: f('phone'), email: f('email'), bank: f('bank'), bik: f('bik'), account: f('account'), corr: f('corr'), signatory: f('signatory') };
+}
+
+function fillSupplier(idx, data) {
+  const d = data || {};
+  const fields = ['name', 'inn', 'kpp', 'ogrn', 'address', 'phone', 'email', 'bank', 'bik', 'account', 'corr', 'signatory'];
+  fields.forEach(k => {
+    const el = document.getElementById('s' + idx + '-' + k);
+    if (el) el.value = d[k] || '';
+  });
+}
+
+function saveSupplier(idx) {
+  const data = readSupplier(idx);
+  if (!data.name) { alert('Введите наименование организации'); return; }
+  const saved = getSaved();
+  const existIdx = data.inn ? saved.findIndex(s => s.inn === data.inn && data.inn) : -1;
+  if (existIdx >= 0) {
+    if (!confirm('Юрлицо с таким ИНН уже сохранено. Обновить?')) return;
+    saved[existIdx] = data;
+  } else {
+    saved.push(data);
+  }
+  setSaved(saved);
+  refreshSavedSelects();
+  alert('Юрлицо «' + data.name + '» сохранено');
+}
+
+function loadSavedSupplier(idx) {
+  const sel = document.getElementById('saved-sel-' + idx);
+  const i = parseInt(sel.value);
+  if (isNaN(i)) { alert('Выберите юрлицо из списка'); return; }
+  const saved = getSaved();
+  if (!saved[i]) return;
+  fillSupplier(idx, saved[i]);
+  onFormInput();
+}
+
+function deleteSavedSupplier(idx) {
+  const sel = document.getElementById('saved-sel-' + idx);
+  const i = parseInt(sel.value);
+  if (isNaN(i)) { alert('Выберите юрлицо для удаления'); return; }
+  if (!confirm('Удалить сохранённое юрлицо?')) return;
+  const saved = getSaved();
+  saved.splice(i, 1);
+  setSaved(saved);
+  sel.value = '';
+  refreshSavedSelects();
+}
+
+// ═══════════════════════════════════════════════
+// LOGO
+// ═══════════════════════════════════════════════
+
+function handleLogoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 1024 * 1024) { alert('Размер логотипа не должен превышать 1 МБ'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    logoBase64 = ev.target.result;
+    document.getElementById('logo-placeholder').style.display = 'none';
+    document.getElementById('logo-loaded').style.display = 'block';
+    document.getElementById('logo-img').src = logoBase64;
+    document.getElementById('logo-filename').textContent = file.name;
+    document.getElementById('logo-area').classList.add('has-logo');
+    refreshPreview();
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function removeLogo(e) {
+  e.stopPropagation();
+  logoBase64 = null;
+  document.getElementById('logo-placeholder').style.display = 'block';
+  document.getElementById('logo-loaded').style.display = 'none';
+  document.getElementById('logo-area').classList.remove('has-logo');
+  refreshPreview();
+}
+
+// ═══════════════════════════════════════════════
+// PRODUCTS
+// ═══════════════════════════════════════════════
+
+function addProduct() {
+  const idx = products.length;
+  products.push({ name: '', unit: 'шт', qty: 1, price: 0, vat: 'none' });
+  appendProductRow(idx);
+  calculateAll();
+}
+
+function deleteProduct(idx) {
+  products.splice(idx, 1);
+  const newPhotos = {};
+  Object.keys(productPhotos).forEach(k => {
+    const ki = parseInt(k);
+    if (ki < idx) newPhotos[ki] = productPhotos[k];
+    else if (ki > idx) newPhotos[ki - 1] = productPhotos[k];
+  });
+  productPhotos = newPhotos;
+  rebuildTable();
+  calculateAll();
+}
+
+function rebuildTable() {
+  document.getElementById('products-body').innerHTML = '';
+  products.forEach((_, i) => appendProductRow(i));
+}
+
+function appendProductRow(idx) {
+  const p = products[idx];
+  const tr = document.createElement('tr');
+  tr.id = 'pr-' + idx;
+  tr.innerHTML = `
+    <td class="photo-cell">
+      <div class="photo-btn" id="pb-${idx}" onclick="document.getElementById('pf-${idx}').click()" title="Загрузить фото">+</div>
+      <input type="file" id="pf-${idx}" accept="image/*" style="display:none" onchange="handleProductPhoto(event,${idx})">
+    </td>
+    <td class="col-name">
+      <input type="text" value="${esc(p.name)}" placeholder="Парта школьная" oninput="products[${idx}].name=this.value;onFormInput()">
+    </td>
+    <td class="col-unit">
+      <select onchange="products[${idx}].unit=this.value;onFormInput()">
+        ${['шт','комплект','набор','пара','м.п.','кг','уп.'].map(u => `<option value="${u}" ${p.unit===u?'selected':''}>${u}</option>`).join('')}
+      </select>
+    </td>
+    <td class="col-qty">
+      <input type="number" min="0" value="${p.qty}" oninput="products[${idx}].qty=parseFloat(this.value)||0;calculateAll()">
+    </td>
+    <td class="col-price">
+      <input type="number" min="0" step="0.01" value="${p.price}" oninput="products[${idx}].price=parseFloat(this.value)||0;calculateAll()">
+    </td>
+    <td class="col-vat">
+      <select onchange="products[${idx}].vat=this.value;calculateAll()">
+        <option value="none" ${p.vat==='none'?'selected':''}>Без НДС</option>
+        <option value="5" ${p.vat==='5'?'selected':''}>НДС 5%</option>
+        <option value="10" ${p.vat==='10'?'selected':''}>НДС 10%</option>
+        <option value="20" ${p.vat==='20'?'selected':''}>НДС 20%</option>
+        <option value="22" ${p.vat==='22'?'selected':''}>НДС 22%</option>
+      </select>
+    </td>
+    <td class="col-sum" id="rs-${idx}">0,00 руб.</td>
+    <td class="col-del"><button class="del-btn" onclick="deleteProduct(${idx})" title="Удалить">×</button></td>
+  `;
+  document.getElementById('products-body').appendChild(tr);
+  if (productPhotos[idx]) setPhotoThumb(idx, productPhotos[idx]);
+}
+
+function handleProductPhoto(e, idx) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { alert('Размер фото не должен превышать 3 МБ'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    productPhotos[idx] = ev.target.result;
+    setPhotoThumb(idx, ev.target.result);
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function setPhotoThumb(idx, src) {
+  const btn = document.getElementById('pb-' + idx);
+  if (btn) btn.innerHTML = `<img src="${src}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:4px">`;
+}
+
+// ═══════════════════════════════════════════════
+// CALCULATIONS
+// ═══════════════════════════════════════════════
+
+function rowPrice(p, markup) { return r2(p.price * (1 + markup)); }
+function rowSum(p, markup) { return r2(rowPrice(p, markup) * p.qty); }
+function rowVAT(sum, vat) {
+  if (vat === 'none') return 0;
+  const rate = parseFloat(vat);
+  return r2(sum * rate / (100 + rate));
+}
+
+function calcKP(markup) {
+  let total = 0, vat = 0, qty = 0;
+  products.forEach(p => {
+    const s = rowSum(p, markup);
+    total += s;
+    vat += rowVAT(s, p.vat);
+    qty += (p.qty || 0);
+  });
+  return { total: r2(total), vat: r2(vat), count: products.length, qty: Math.round(qty) };
+}
+
+function calculateAll() {
+  products.forEach((p, i) => {
+    const el = document.getElementById('rs-' + i);
+    if (el) el.textContent = fmtMoney(rowSum(p, 0));
+  });
+
+  const kp1 = calcKP(0), kp2 = calcKP(0.02), kp3 = calcKP(0.04);
+  document.getElementById('table-total').textContent = fmtMoney(kp1.total);
+
+  [[kp1, 1], [kp2, 2], [kp3, 3]].forEach(([kp, n]) => {
+    document.getElementById('tot-' + n + '-amount').textContent = fmtMoney(kp.total);
+    document.getElementById('tot-' + n + '-meta').innerHTML =
+      `Позиций: ${kp.count} · Ед.: ${kp.qty}<br>В т.ч. НДС: ${fmtMoney(kp.vat)}`;
+  });
+
+  refreshPreview();
+}
+
+// ═══════════════════════════════════════════════
+// PREVIEW
+// ═══════════════════════════════════════════════
+
+function showPreview(idx) {
+  [0, 1, 2].forEach(i => {
+    document.getElementById('ptab-' + i).classList.toggle('active', i === idx);
+    document.getElementById('pv-' + i).classList.toggle('active', i === idx);
+  });
+}
+
+function refreshPreview() {
+  [0, 0.02, 0.04].forEach((markup, i) => {
+    document.getElementById('kp-doc-' + i).innerHTML = buildKPHTML(i, markup);
+  });
+}
+
+function getFormData() {
+  return {
+    customer: { inn: gv('c-inn'), name: gv('c-name'), address: gv('c-address'), contact: gv('c-contact'), date: gv('c-date'), validUntil: gv('c-valid') },
+    kpNumber: gv('kp-number'),
+    preambule: gv('preambule'),
+    delivery: gv('delivery-text'),
+    assembly: gv('assembly'),
+    suppliers: [0, 1, 2].map(i => readSupplier(i))
+  };
+}
+
+function buildKPHTML(kpIdx, markup) {
+  const fd = getFormData();
+  const sup = fd.suppliers[kpIdx];
+  const kpNum = fd.kpNumber ? fd.kpNumber + (kpIdx > 0 ? '/' + (kpIdx + 1) : '') : '—';
+  const dateStr = fmtDate(fd.customer.date) || '__.__.____';
+  const validStr = fmtDate(fd.customer.validUntil) || '—';
+  const assemblyTxt = fd.assembly === 'included' ? 'Включена в стоимость' : 'Оплачивается отдельно';
+  const markupLbl = markup === 0 ? '' : markup === 0.02 ? ' (вариант 2)' : ' (вариант 3)';
+
+  const supLines = [
+    sup.name, sup.inn ? 'ИНН: ' + sup.inn : '', sup.kpp ? 'КПП: ' + sup.kpp : '',
+    sup.ogrn ? 'ОГРН: ' + sup.ogrn : '', sup.address, sup.phone, sup.email,
+    sup.account ? 'р/с: ' + sup.account : '', sup.bank ? sup.bank : '',
+    sup.bik ? 'БИК: ' + sup.bik : '', sup.corr ? 'к/с: ' + sup.corr : ''
+  ].filter(Boolean).map(esc).join('<br>');
+
+  let rows = '', kpTotal = 0, kpVAT = 0;
+  products.forEach((p, i) => {
+    const price = rowPrice(p, markup);
+    const sum = rowSum(p, markup);
+    const vat = rowVAT(sum, p.vat);
+    kpTotal += sum; kpVAT += vat;
+    const vatLbl = p.vat === 'none' ? 'Без НДС' : 'НДС ' + p.vat + '%';
+    const photoCell = productPhotos[i]
+      ? `<img src="${productPhotos[i]}" class="kp-photo-thumb" alt="">`
+      : '';
+    rows += `<tr>
+      <td class="tc">${i + 1}</td>
+      <td>${photoCell}${esc(p.name || '—')}</td>
+      <td class="tc">${esc(p.unit)}</td>
+      <td class="tc">${p.qty}</td>
+      <td class="tr">${fmtMoneyRaw(price)}</td>
+      <td class="tc">${vatLbl}</td>
+      <td class="tr tb">${fmtMoneyRaw(sum)}</td>
+    </tr>`;
+  });
+
+  kpTotal = r2(kpTotal); kpVAT = r2(kpVAT);
+  const hasVAT = products.some(p => p.vat !== 'none');
+
+  const logoHtml = logoBase64
+    ? `<img src="${logoBase64}" class="kp-doc-logo" alt="Логотип">`
+    : `<div style="width:120px"></div>`;
+
+  return `<div class="kp-doc">
+    <div class="kp-doc-header">
+      ${logoHtml}
+      <div class="kp-doc-sup">${supLines || '<i>Реквизиты не заполнены</i>'}</div>
+    </div>
+
+    <div class="kp-doc-title">Коммерческое предложение${markupLbl}</div>
+    <div class="kp-doc-num">№ ${esc(kpNum)} &nbsp;&nbsp;от&nbsp;&nbsp; ${dateStr}</div>
+
+    <div class="kp-doc-parties">
+      <div>
+        <div class="party-lbl">Поставщик</div>
+        <strong>${esc(sup.name) || '—'}</strong><br>
+        ${sup.inn ? 'ИНН: ' + esc(sup.inn) : ''}${sup.kpp ? ' / КПП: ' + esc(sup.kpp) : ''}
+      </div>
+      <div>
+        <div class="party-lbl">Заказчик</div>
+        <strong>${esc(fd.customer.name) || '—'}</strong><br>
+        ${fd.customer.inn ? 'ИНН: ' + esc(fd.customer.inn) + '<br>' : ''}
+        ${fd.customer.address ? esc(fd.customer.address) + '<br>' : ''}
+        ${fd.customer.contact ? 'Контакт: ' + esc(fd.customer.contact) : ''}
+      </div>
+    </div>
+
+    ${fd.preambule ? `<div class="kp-doc-preambule">${escNl(fd.preambule)}</div>` : ''}
+
+    <table class="kp-doc-table">
+      <thead>
+        <tr>
+          <th style="width:28px">№</th>
+          <th>Наименование</th>
+          <th style="width:55px">Ед.</th>
+          <th style="width:48px">Кол-во</th>
+          <th style="width:90px">Цена, руб.</th>
+          <th style="width:80px">НДС</th>
+          <th style="width:90px">Сумма, руб.</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows || '<tr><td colspan="7" style="text-align:center;padding:16px;color:#999">Позиции не добавлены</td></tr>'}
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="6" class="tr">ИТОГО:</td>
+          <td class="tr tb">${fmtMoneyRaw(kpTotal)}</td>
+        </tr>
+        ${hasVAT ? `<tr><td colspan="6" class="tr">В т.ч. НДС:</td><td class="tr">${fmtMoneyRaw(kpVAT)}</td></tr>` : ''}
+      </tfoot>
+    </table>
+
+    <table class="kp-doc-cond">
+      <tr><td class="cl">Условия поставки:</td><td>${escNl(fd.delivery) || '—'}</td></tr>
+      <tr><td class="cl">Сборка:</td><td>${assemblyTxt}</td></tr>
+      <tr><td class="cl">Срок действия предложения:</td><td>${validStr}</td></tr>
+    </table>
+
+    <div class="kp-doc-sign">
+      <div class="kp-doc-sign-block">
+        <div class="kp-doc-sign-line"></div>
+        <div class="kp-doc-sign-name">${esc(sup.signatory) || 'Подпись / ФИО'}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// PRINT
+// ═══════════════════════════════════════════════
+
+function printKPs() {
+  [0, 0.02, 0.04].forEach((markup, i) => {
+    document.getElementById('print-kp-' + i).innerHTML = buildKPHTML(i, markup);
+  });
+  window.print();
+}
+
+// ═══════════════════════════════════════════════
+// EXCEL EXPORT
+// ═══════════════════════════════════════════════
+
+function exportExcel() {
+  if (typeof XLSX === 'undefined') { alert('Библиотека Excel не загружена. Проверьте интернет-соединение.'); return; }
+  const fd = getFormData();
+  const wb = XLSX.utils.book_new();
+
+  [0, 0.02, 0.04].forEach((markup, kpIdx) => {
+    const sup = fd.suppliers[kpIdx];
+    const kpNum = fd.kpNumber ? fd.kpNumber + (kpIdx > 0 ? '/' + (kpIdx + 1) : '') : '';
+    const markupLbl = ['Базовая цена', '+2%', '+4%'][kpIdx];
+    const rows = [];
+
+    rows.push(['КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ — ' + markupLbl]);
+    rows.push(['Номер КП:', kpNum, 'Дата:', fmtDate(fd.customer.date)]);
+    rows.push([]);
+    rows.push(['Поставщик:', sup.name || '', 'ИНН:', sup.inn || '']);
+    rows.push(['Заказчик:', fd.customer.name || '', 'ИНН:', fd.customer.inn || '']);
+    rows.push([]);
+    rows.push(['№', 'Наименование', 'Ед. изм.', 'Кол-во', 'Цена, руб.', 'НДС', 'Сумма, руб.']);
+
+    let total = 0, vat = 0;
+    products.forEach((p, i) => {
+      const price = rowPrice(p, markup);
+      const sum = rowSum(p, markup);
+      const v = rowVAT(sum, p.vat);
+      total += sum; vat += v;
+      rows.push([i + 1, p.name, p.unit, p.qty, price, p.vat === 'none' ? 'Без НДС' : 'НДС ' + p.vat + '%', sum]);
+    });
+
+    rows.push([]);
+    rows.push(['', '', '', '', '', 'ИТОГО:', r2(total)]);
+    if (r2(vat) > 0) rows.push(['', '', '', '', '', 'В т.ч. НДС:', r2(vat)]);
+    rows.push([]);
+    rows.push(['Условия поставки:', fd.delivery]);
+    rows.push(['Сборка:', fd.assembly === 'included' ? 'Включена' : 'Оплачивается отдельно']);
+    rows.push(['Срок действия:', fmtDate(fd.customer.validUntil)]);
+    rows.push(['Подписант:', sup.signatory || '']);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:4},{wch:40},{wch:12},{wch:8},{wch:14},{wch:14},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, ws, 'КП №' + (kpIdx + 1));
+  });
+
+  // Summary
+  const sumRows = [['СВОДНАЯ ТАБЛИЦА'], ['КП', 'Цена', 'Поставщик', 'Заказчик', 'Дата', 'Позиций', 'Итого, руб.', 'НДС, руб.']];
+  [0, 0.02, 0.04].forEach((markup, kpIdx) => {
+    const kp = calcKP(markup);
+    const sup = fd.suppliers[kpIdx];
+    const kpNum = fd.kpNumber ? fd.kpNumber + (kpIdx > 0 ? '/' + (kpIdx + 1) : '') : '';
+    sumRows.push([kpNum, ['Базовая', '+2%', '+4%'][kpIdx], sup.name || '', fd.customer.name || '', fmtDate(fd.customer.date), kp.count, kp.total, kp.vat]);
+  });
+  const wsS = XLSX.utils.aoa_to_sheet(sumRows);
+  wsS['!cols'] = [{wch:16},{wch:10},{wch:30},{wch:30},{wch:12},{wch:10},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsS, 'Сводная');
+
+  XLSX.writeFile(wb, 'КП_' + (fd.kpNumber || 'export') + '.xlsx');
+}
+
+// ═══════════════════════════════════════════════
+// SAVE / LOAD / CLEAR
+// ═══════════════════════════════════════════════
+
+function onFormInput() { calculateAll(); }
+
+function getFullState() {
+  const fd = getFormData();
+  return { ...fd, products, logo: logoBase64 };
+}
+
+function applyState(state) {
+  if (!state) return;
+  const c = state.customer || {};
+  document.getElementById('c-inn').value = c.inn || '';
+  document.getElementById('c-name').value = c.name || '';
+  document.getElementById('c-address').value = c.address || '';
+  document.getElementById('c-contact').value = c.contact || '';
+  document.getElementById('c-date').value = c.date || '';
+  document.getElementById('c-valid').value = c.validUntil || '';
+  if (state.kpNumber) document.getElementById('kp-number').value = state.kpNumber;
+  document.getElementById('preambule').value = state.preambule || DEFAULT_PREAMBULE;
+  document.getElementById('delivery-text').value = state.delivery || '';
+  document.getElementById('assembly').value = state.assembly || 'included';
+  if (state.suppliers) state.suppliers.forEach((s, i) => fillSupplier(i, s));
+  if (state.products) { products = state.products; productPhotos = {}; rebuildTable(); }
+  if (state.logo) {
+    logoBase64 = state.logo;
+    document.getElementById('logo-placeholder').style.display = 'none';
+    document.getElementById('logo-loaded').style.display = 'block';
+    document.getElementById('logo-img').src = state.logo;
+    document.getElementById('logo-filename').textContent = 'Логотип загружен';
+    document.getElementById('logo-area').classList.add('has-logo');
+  }
+  calculateAll();
+}
+
+function saveFormData() {
+  localStorage.setItem('kp_form_data', JSON.stringify(getFullState()));
+  const btn = document.getElementById('btn-save');
+  const orig = btn.textContent;
+  btn.textContent = '✓ Сохранено';
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1600);
+}
+
+function downloadFormData() {
+  const blob = new Blob([JSON.stringify(getFullState(), null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'КП_данные_' + (gv('kp-number') || todayISO()) + '.json';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function handleUploadJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try { applyState(JSON.parse(ev.target.result)); alert('Данные загружены успешно'); }
+    catch { alert('Ошибка чтения файла. Убедитесь, что это корректный JSON.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function clearFormConfirm() {
+  if (!confirm('Очистить все данные формы?\nЭто действие нельзя отменить.')) return;
+  products = []; productPhotos = {}; logoBase64 = null;
+
+  ['c-inn','c-name','c-address','c-contact','c-date','c-valid','kp-number','delivery-text'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('preambule').value = DEFAULT_PREAMBULE;
+  document.getElementById('assembly').value = 'included';
+  [0, 1, 2].forEach(i => fillSupplier(i, {}));
+
+  document.getElementById('logo-placeholder').style.display = 'block';
+  document.getElementById('logo-loaded').style.display = 'none';
+  document.getElementById('logo-area').classList.remove('has-logo');
+
+  rebuildTable();
+  calculateAll();
+  document.getElementById('kp-number').value = '';
+  document.getElementById('c-date').value = todayISO();
+  generateKPNumber();
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('c-date').value = todayISO();
+  const valid = new Date();
+  valid.setDate(valid.getDate() + 30);
+  document.getElementById('c-valid').value = valid.toISOString().slice(0, 10);
+  document.getElementById('preambule').value = DEFAULT_PREAMBULE;
+
+  refreshSavedSelects();
+  generateKPNumber();
+
+  const saved = localStorage.getItem('kp_form_data');
+  if (saved) {
+    try { applyState(JSON.parse(saved)); }
+    catch (e) { /* ignore */ }
+  }
+
+  if (products.length === 0) addProduct();
+  calculateAll();
+});
+
+</script>
+</body>
+</html>
