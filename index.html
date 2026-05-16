@@ -285,7 +285,7 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
     <div class="saved-row">
       <select id="saved-sel-0" onchange="autoLoadSupplier(0)"><option value="">— Выбрать сохранённое юрлицо —</option></select>
       <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sup-file-0').click()" title="Загрузить реквизиты из JSON-файла">⬆ Загрузить</button>
-      <input type="file" id="sup-file-0" accept=".json" style="display:none" onchange="handleSupplierFile(event,0)">
+      <input type="file" id="sup-file-0" accept=".json,.docx,.doc,.xlsx,.xls,.txt" style="display:none" onchange="handleSupplierFile(event,0)">
       <button class="btn btn-secondary btn-sm" onclick="saveSupplier(0)">💾 Сохранить</button>
       <button class="btn btn-ghost btn-sm" onclick="deleteSavedSupplier(0)">Удалить</button>
       <button class="btn btn-ghost btn-sm" onclick="downloadSupplierTemplate()" title="Скачать шаблон JSON">📄 Шаблон</button>
@@ -311,7 +311,7 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
     <div class="saved-row">
       <select id="saved-sel-1" onchange="autoLoadSupplier(1)"><option value="">— Выбрать сохранённое юрлицо —</option></select>
       <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sup-file-1').click()" title="Загрузить реквизиты из JSON-файла">⬆ Загрузить</button>
-      <input type="file" id="sup-file-1" accept=".json" style="display:none" onchange="handleSupplierFile(event,1)">
+      <input type="file" id="sup-file-1" accept=".json,.docx,.doc,.xlsx,.xls,.txt" style="display:none" onchange="handleSupplierFile(event,1)">
       <button class="btn btn-secondary btn-sm" onclick="saveSupplier(1)">💾 Сохранить</button>
       <button class="btn btn-ghost btn-sm" onclick="deleteSavedSupplier(1)">Удалить</button>
     </div>
@@ -336,7 +336,7 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
     <div class="saved-row">
       <select id="saved-sel-2" onchange="autoLoadSupplier(2)"><option value="">— Выбрать сохранённое юрлицо —</option></select>
       <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sup-file-2').click()" title="Загрузить реквизиты из JSON-файла">⬆ Загрузить</button>
-      <input type="file" id="sup-file-2" accept=".json" style="display:none" onchange="handleSupplierFile(event,2)">
+      <input type="file" id="sup-file-2" accept=".json,.docx,.doc,.xlsx,.xls,.txt" style="display:none" onchange="handleSupplierFile(event,2)">
       <button class="btn btn-secondary btn-sm" onclick="saveSupplier(2)">💾 Сохранить</button>
       <button class="btn btn-ghost btn-sm" onclick="deleteSavedSupplier(2)">Удалить</button>
     </div>
@@ -508,6 +508,7 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <script>
 
 // ═══════════════════════════════════════════════
@@ -653,37 +654,195 @@ function loadSavedSupplier(idx) {
 }
 
 // Загрузка реквизитов из JSON-файла
-function handleSupplierFile(e, idx) {
+// ─── ЗАГРУЗКА РЕКВИЗИТОВ ИЗ ФАЙЛА ────────────────
+
+async function handleSupplierFile(e, idx) {
   const file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    try {
-      const raw = JSON.parse(ev.target.result);
-      // Нормализуем ключи — поддерживаем разные названия полей
-      const map = {
-        name:      raw.name      || raw['Наименование']       || raw['organization'] || '',
-        inn:       raw.inn       || raw['ИНН']                || raw['INN']          || '',
-        kpp:       raw.kpp       || raw['КПП']                || raw['KPP']          || '',
-        ogrn:      raw.ogrn      || raw['ОГРН']               || raw['OGRN']         || raw['ОГРНИП'] || '',
-        address:   raw.address   || raw['Адрес']              || raw['address_legal'] || '',
-        phone:     raw.phone     || raw['Телефон']            || raw['tel']          || '',
-        email:     raw.email     || raw['Email']              || raw['mail']         || '',
-        bank:      raw.bank      || raw['Банк']               || raw['bank_name']    || '',
-        bik:       raw.bik       || raw['БИК']                || raw['BIK']          || '',
-        account:   raw.account   || raw['Расчётный счёт']     || raw['rs']           || raw['r_account'] || '',
-        corr:      raw.corr      || raw['Корреспондентский счёт'] || raw['ks']       || raw['k_account'] || '',
-        signatory: raw.signatory || raw['Подписант']          || raw['director']     || raw['Директор'] || ''
-      };
-      fillSupplier(idx, map);
-      onFormInput();
-      showLoadToast('Реквизиты загружены из файла: ' + (map.name || file.name));
-    } catch(err) {
-      alert('Ошибка чтения файла.\n\nУбедитесь, что файл в формате JSON.\nПример структуры — кнопка «Шаблон».');
-    }
-  };
-  reader.readAsText(file);
   e.target.value = '';
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  showLoadToast('Читаю документ...');
+
+  try {
+    let data;
+
+    if (ext === 'json') {
+      const text = await readAsText(file);
+      data = parseFromJSON(JSON.parse(text));
+
+    } else if (ext === 'docx' || ext === 'doc') {
+      const buf = await readAsArrayBuffer(file);
+      if (typeof mammoth === 'undefined') throw new Error('Библиотека mammoth не загружена — проверьте интернет');
+      const result = await mammoth.extractRawText({ arrayBuffer: buf });
+      data = parseFromText(result.value);
+
+    } else if (ext === 'xlsx' || ext === 'xls') {
+      const buf = await readAsArrayBuffer(file);
+      if (typeof XLSX === 'undefined') throw new Error('Библиотека XLSX не загружена');
+      const wb = XLSX.read(buf, { type: 'array' });
+      const allText = wb.SheetNames.map(name => {
+        const ws = wb.Sheets[name];
+        return Object.keys(ws)
+          .filter(k => !k.startsWith('!'))
+          .map(k => ws[k].v != null ? String(ws[k].v) : '')
+          .join('\n');
+      }).join('\n');
+      data = parseFromText(allText);
+
+    } else if (ext === 'txt') {
+      const text = await readAsText(file);
+      data = parseFromText(text);
+
+    } else {
+      alert('Поддерживаемые форматы:\nWord (.docx), Excel (.xlsx), текст (.txt), JSON (.json)');
+      return;
+    }
+
+    fillSupplier(idx, data);
+    onFormInput();
+
+    const found = Object.values(data).filter(v => v).length;
+    if (found === 0) {
+      showLoadToast('Документ прочитан, но реквизиты не найдены — заполните вручную');
+    } else {
+      showLoadToast(`Загружено полей: ${found} — ${data.name || file.name}`);
+    }
+
+  } catch(err) {
+    alert('Ошибка при чтении файла:\n' + err.message);
+  }
+}
+
+// Чтение файла как текст
+function readAsText(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = () => rej(new Error('Не удалось прочитать файл'));
+    r.readAsText(file, 'UTF-8');
+  });
+}
+
+// Чтение файла как ArrayBuffer (для docx/xlsx)
+function readAsArrayBuffer(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = () => rej(new Error('Не удалось прочитать файл'));
+    r.readAsArrayBuffer(file);
+  });
+}
+
+// Парсинг из JSON (разные варианты ключей)
+function parseFromJSON(raw) {
+  const f = (...keys) => { for (const k of keys) { if (raw[k]) return String(raw[k]).trim(); } return ''; };
+  return {
+    name:      f('name','Наименование','организация','organization','fullName'),
+    inn:       f('inn','ИНН','INN'),
+    kpp:       f('kpp','КПП','KPP'),
+    ogrn:      f('ogrn','ОГРН','OGRN','ОГРНИП','ogrnip'),
+    address:   f('address','Адрес','юр_адрес','address_legal','legalAddress'),
+    phone:     f('phone','Телефон','tel','telephone'),
+    email:     f('email','Email','mail','почта'),
+    bank:      f('bank','Банк','bank_name','bankName'),
+    bik:       f('bik','БИК','BIK'),
+    account:   f('account','Расчётный счёт','р_с','rs','r_account','checkingAccount'),
+    corr:      f('corr','Корреспондентский счёт','к_с','ks','k_account','corrAccount'),
+    signatory: f('signatory','Подписант','director','Директор','руководитель','signer')
+  };
+}
+
+// Умный парсинг свободного текста (Word / Excel / txt)
+function parseFromText(raw) {
+  // Нормализуем: убираем лишние пробелы, объединяем строки с метками
+  const t = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  // Расширенная версия с учётом разных форматов карточки организации
+  const lines = t.split('\n').map(l => l.trim()).filter(Boolean);
+  const joined = lines.join(' ');
+
+  const find = (patterns) => {
+    for (const re of patterns) {
+      const m = (re.multiline ? t : joined).match(re);
+      if (m) return (m[2] || m[1] || '').trim().replace(/\s+/g, ' ');
+    }
+    return '';
+  };
+
+  // ИНН (10 или 12 цифр)
+  const inn = find([
+    /ИНН\s*[:/]?\s*(\d{10,12})/i,
+    /\bИНН\b[^\d]*(\d{10,12})/i
+  ]);
+
+  // КПП (9 цифр)
+  const kpp = find([
+    /КПП\s*[:/]?\s*(\d{9})/i
+  ]);
+
+  // ОГРН/ОГРНИП
+  const ogrn = find([
+    /ОГРНИП\s*[:/]?\s*(\d{15})/i,
+    /ОГРН\s*[:/]?\s*(\d{13,15})/i
+  ]);
+
+  // БИК
+  const bik = find([
+    /БИК\s*[:/]?\s*(\d{9})/i
+  ]);
+
+  // Расчётный счёт (20 цифр после р/с или расчётный)
+  const account = find([
+    /р\s*\/\s*с\s*[:/]?\s*(\d{20})/i,
+    /расч[её]тн\w+\s+сч[её]т\s*[:/]?\s*(\d{20})/i,
+    /расч\.\s*сч\.\s*[:/]?\s*(\d{20})/i
+  ]);
+
+  // Корреспондентский счёт
+  const corr = find([
+    /к\s*\/\s*с\s*[:/]?\s*(\d{20})/i,
+    /корр\w*[\s.]+сч[её]т\s*[:/]?\s*(\d{20})/i,
+    /к\/с\s*[:/]?\s*(\d{20})/i
+  ]);
+
+  // Название банка
+  const bank = find([
+    /(?:банк|в банке)[:\s]+([^\n,;]{4,60})/i,
+    /((?:ПАО|АО|ООО)\s+[«"'"«][\s\w-]+(?:банк|bank)[\s\w-]*[»"'"»]?)/i,
+    /((?:ПАО|АО|ООО)\s+(?:банк|Сбербанк|Альфа|ВТБ|Тинькофф|Открытие|Россельхоз|Газпром)[\w\s-]*)/i
+  ]);
+
+  // Наименование организации
+  const nameRe = /((?:ООО|ИП|АО|ОАО|ЗАО|ПАО|НКО|МУП|ГУП|ФГУП|МБОУ|МАОУ|ГБОУ|ГБДОУ|МАДОУ|КГБУЗ|КП)\s+[«"'"«]?[\w\s\-.,«»"']+?[»"'"»]?)(?=\s*(?:ИНН|КПП|ОГРН|адрес|тел|$|\n))/i;
+  const nameMatch = joined.match(nameRe);
+  const name = nameMatch ? nameMatch[1].trim().replace(/\s+/g, ' ') : '';
+
+  // Юридический адрес — ищем по маркеру или первую строку с г./ул.
+  const addrPatterns = [
+    /(?:юр(?:идический)?\s*(?:адрес)?|адрес\s*(?:места\s*)?(?:нахождения|регистрации|орг\.?))[:\s]+([^\n]{10,120})/i,
+    /(?:адрес)[:\s]+([^\n]{10,120})/i,
+    /((г\.|город)\s+[\w-]+,\s*(?:ул\.|улица|пр\.|проспект|пер\.)[\s\w-]+,\s*д\.\s*[\w-]+[^\n]{0,60})/i
+  ];
+  const address = find(addrPatterns);
+
+  // Телефон
+  const phone = find([
+    /(?:тел(?:ефон)?|phone)[.:\s]*([+7\d][\d\s\-().]{8,18})/i,
+    /(\+7\s*\(?\d{3}\)?\s*\d{3}[\s-]\d{2}[\s-]\d{2})/,
+    /(8\s*\(?\d{3}\)?\s*\d{3}[\s-]\d{2}[\s-]\d{2})/
+  ]);
+
+  // Email
+  const emailMatch = joined.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+  const email = emailMatch ? emailMatch[0] : '';
+
+  // Подписант/директор
+  const signatory = find([
+    /((?:Генеральный директор|Директор|Руководитель|Президент|ИП)\s+[А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё.]+(?:\s+[А-ЯЁ][а-яё]+)?)/i,
+    /(?:подписант|действует на основании[^,\n]*)[:\s]+([А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё.]+(?:\s+[А-ЯЁ][а-яё]+)?)/i
+  ]);
+
+  return { name, inn, kpp, ogrn, address, phone, email, bank, bik, account, corr, signatory };
 }
 
 // Скачать шаблон JSON с пояснениями
