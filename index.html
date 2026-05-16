@@ -206,9 +206,22 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
   h1 { font-size: 30px; }
   .totals-grid { grid-template-columns: 1fr; }
   .stabs { flex-direction: column; }
-  .kp-doc { padding: 24px; }
-  .kp-doc-parties { grid-template-columns: 1fr; }
   .form-grid-3 { grid-template-columns: 1fr 1fr; }
+  .actions-card { gap: 8px; }
+
+  /* Превью: контейнер скроллится горизонтально */
+  .preview-wrap { padding: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Документ КП: фиксированная минимальная ширина — таблица не ломается */
+  .kp-doc { min-width: 580px; padding: 20px 18px; font-size: 11px; }
+  .kp-doc-title { font-size: 14px; }
+  .kp-doc-header { flex-direction: column; gap: 12px; }
+  .kp-doc-sup { text-align: left; max-width: 100%; }
+  .kp-doc-parties { grid-template-columns: 1fr; gap: 10px; }
+  .kp-doc-table { font-size: 10px; }
+  .kp-doc-table th, .kp-doc-table td { padding: 4px 5px; }
+  .kp-doc-cond .cl { width: 140px; }
+  .kp-doc-sign-block { width: 180px; }
 }
 
 </style>
