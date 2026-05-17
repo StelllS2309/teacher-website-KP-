@@ -552,16 +552,16 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
     <div class="fg" style="margin-bottom:16px">
       <label>Провайдер</label>
       <select id="es-provider" onchange="updateEmailSettingsUI()">
-        <option value="brevo">Brevo (Sendinblue) — бесплатно 300 писем/день</option>
+        <option value="resend">Resend — бесплатно 100 писем/день, вход через GitHub</option>
         <option value="mailjet">Mailjet — бесплатно 200 писем/день</option>
       </select>
     </div>
 
-    <div id="es-brevo-hint" class="info-box">
-      1. Зарегистрируйтесь на <a href="https://brevo.com" target="_blank" rel="noopener">brevo.com</a><br>
-      2. Верифицируйте домен: Senders &amp; IP → Domains → Add a domain<br>
-      3. Создайте API-ключ: SMTP &amp; API → API Keys → Create<br>
-      4. Вставьте ключ ниже
+    <div id="es-resend-hint" class="info-box">
+      1. Зайдите на <a href="https://resend.com" target="_blank" rel="noopener">resend.com</a> → «Sign in with GitHub» (email не нужен)<br>
+      2. Добавьте домен: Domains → Add Domain → следуйте инструкции по DNS<br>
+      3. Создайте API-ключ: API Keys → Create API Key<br>
+      4. Вставьте ключ ниже (начинается с <b>re_</b>)
     </div>
     <div id="es-mailjet-hint" class="info-box" style="display:none">
       1. Зарегистрируйтесь на <a href="https://mailjet.com" target="_blank" rel="noopener">mailjet.com</a><br>
@@ -571,7 +571,7 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 
     <div class="fg" style="margin-bottom:16px">
       <label>API-ключ</label>
-      <input type="password" id="es-apikey" placeholder="xkeysib-..." autocomplete="off">
+      <input type="password" id="es-apikey" placeholder="re_xxxxxxxx..." autocomplete="off">
     </div>
     <div class="fg" style="margin-bottom:20px">
       <label>Ваш домен (для генерации адресов отправителей)</label>
@@ -1748,7 +1748,7 @@ function updateSendStrip() {
 
 function openEmailSettings() {
   const cfg = loadEmailCfg();
-  document.getElementById('es-provider').value = cfg.provider || 'brevo';
+  document.getElementById('es-provider').value = cfg.provider || 'resend';
   document.getElementById('es-apikey').value = cfg.apiKey || '';
   document.getElementById('es-domain').value = cfg.domain || '';
   updateEmailSettingsUI();
@@ -1766,7 +1766,7 @@ function closeEmailSettings() {
 
 function updateEmailSettingsUI() {
   const p = document.getElementById('es-provider').value;
-  document.getElementById('es-brevo-hint').style.display = p === 'brevo' ? '' : 'none';
+  document.getElementById('es-resend-hint').style.display = p === 'resend' ? '' : 'none';
   document.getElementById('es-mailjet-hint').style.display = p === 'mailjet' ? '' : 'none';
 }
 
@@ -1870,10 +1870,11 @@ async function doSendKPEmail() {
         })
       });
     } else {
-      response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      // Resend (default)
+      response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: { 'api-key': cfg.apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sender: { name: supName, email: fromEmail }, to: [{ email: toEmail }], subject, htmlContent: emailHtml })
+        headers: { 'Authorization': 'Bearer ' + cfg.apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: `${supName} <${fromEmail}>`, to: [toEmail], subject, html: emailHtml })
       });
     }
 
@@ -1883,7 +1884,7 @@ async function doSendKPEmail() {
       updateSendStrip();
     } else {
       const err = await response.json().catch(() => ({}));
-      const msg = err.message || (err.Messages && err.Messages[0] && err.Messages[0].Errors && err.Messages[0].Errors[0] && err.Messages[0].Errors[0].ErrorMessage) || `HTTP ${response.status}`;
+      const msg = err.message || err.name || `HTTP ${response.status}`;
       throw new Error(msg);
     }
   } catch (e) {
