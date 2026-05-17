@@ -552,17 +552,17 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
     <div class="fg" style="margin-bottom:16px">
       <label>Способ отправки</label>
       <select id="es-provider" onchange="updateEmailSettingsUI()">
-        <option value="yandex">Яндекс / Mail.ru — без домена, бесплатно ✓</option>
+        <option value="yandex">Mail.ru / BK.ru — без домена, бесплатно ✓</option>
         <option value="resend">Resend — нужен домен, 100 писем/день</option>
         <option value="mailjet">Mailjet — нужен домен, 200 писем/день</option>
       </select>
     </div>
 
     <div id="es-yandex-hint" class="info-box">
-      1. Создайте <b>3 бесплатных аккаунта</b> на <a href="https://mail.yandex.ru" target="_blank" rel="noopener">mail.yandex.ru</a> (нужен телефон)<br>
-      2. В каждом аккаунте: <b>Настройки → Почтовые программы → SMTP включить</b><br>
-      3. Там же создайте <b>Пароль приложения</b> (не основной пароль)<br>
-      4. Введите email и пароль приложения для каждого КП ниже
+      Для каждого аккаунта Mail.ru / BK.ru:<br>
+      1. Войдите → <b>Настройки → Безопасность → Пароли для внешних приложений → Создать</b><br>
+      2. Название: «КП», скопируйте сгенерированный пароль<br>
+      3. Вставьте его в поле «Пароль» ниже (основной пароль не подойдёт)
     </div>
     <div id="es-resend-hint" class="info-box" style="display:none">
       1. Зайдите на <a href="https://resend.com" target="_blank" rel="noopener">resend.com</a> → «Sign in with GitHub»<br>
@@ -582,21 +582,21 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
         <div>
           <div style="font-size:12px;font-weight:700;margin-bottom:6px">КП №1 — базовая цена</div>
           <div class="form-grid-2" style="gap:8px">
-            <input type="email" id="smtp-email-0" placeholder="kp1@yandex.ru" autocomplete="off">
+            <input type="email" id="smtp-email-0" placeholder="mebel_torg1605@bk.ru" autocomplete="off">
             <input type="password" id="smtp-pass-0" placeholder="Пароль приложения" autocomplete="new-password">
           </div>
         </div>
         <div>
           <div style="font-size:12px;font-weight:700;margin-bottom:6px">КП №2 — +2%</div>
           <div class="form-grid-2" style="gap:8px">
-            <input type="email" id="smtp-email-1" placeholder="kp2@yandex.ru" autocomplete="off">
+            <input type="email" id="smtp-email-1" placeholder="opt2309@mail.ru" autocomplete="off">
             <input type="password" id="smtp-pass-1" placeholder="Пароль приложения" autocomplete="new-password">
           </div>
         </div>
         <div>
           <div style="font-size:12px;font-weight:700;margin-bottom:6px">КП №3 — +4%</div>
           <div class="form-grid-2" style="gap:8px">
-            <input type="email" id="smtp-email-2" placeholder="kp3@yandex.ru" autocomplete="off">
+            <input type="email" id="smtp-email-2" placeholder="parta_opt@mail.ru" autocomplete="off">
             <input type="password" id="smtp-pass-2" placeholder="Пароль приложения" autocomplete="new-password">
           </div>
         </div>
@@ -1983,6 +1983,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
   refreshSavedSelects();
   generateKPNumber();
+
+  // Предзаполнить адреса Mail.ru если аккаунты ещё не настроены
+  const cfg0 = loadEmailCfg();
+  if (!cfg0.provider && !cfg0.smtpAccounts) {
+    cfg0.provider = 'yandex';
+    cfg0.smtpAccounts = [
+      { email: 'mebel_torg1605@bk.ru',  password: '' },
+      { email: 'opt2309@mail.ru',        password: '' },
+      { email: 'parta_opt@mail.ru',      password: '' }
+    ];
+    saveEmailCfg(cfg0);
+  }
   updateSendStrip();
 
   const saved = localStorage.getItem('kp_form_data');
