@@ -547,21 +547,27 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 <div class="modal-overlay" id="email-settings-modal" onclick="if(event.target===this)closeEmailSettings()">
   <div class="modal-box">
     <div class="modal-title">Настройки email-отправки</div>
-    <div class="modal-sub">Настройте один раз — и отправляйте КП прямо из браузера с уникальных адресов. Каждое КП уходит с отдельного email.</div>
+    <div class="modal-sub">Каждое КП отправляется с отдельного email-адреса.</div>
 
     <div class="fg" style="margin-bottom:16px">
-      <label>Провайдер</label>
+      <label>Способ отправки</label>
       <select id="es-provider" onchange="updateEmailSettingsUI()">
-        <option value="resend">Resend — бесплатно 100 писем/день, вход через GitHub</option>
-        <option value="mailjet">Mailjet — бесплатно 200 писем/день</option>
+        <option value="yandex">Яндекс / Mail.ru — без домена, бесплатно ✓</option>
+        <option value="resend">Resend — нужен домен, 100 писем/день</option>
+        <option value="mailjet">Mailjet — нужен домен, 200 писем/день</option>
       </select>
     </div>
 
-    <div id="es-resend-hint" class="info-box">
-      1. Зайдите на <a href="https://resend.com" target="_blank" rel="noopener">resend.com</a> → «Sign in with GitHub» (email не нужен)<br>
-      2. Добавьте домен: Domains → Add Domain → следуйте инструкции по DNS<br>
-      3. Создайте API-ключ: API Keys → Create API Key<br>
-      4. Вставьте ключ ниже (начинается с <b>re_</b>)
+    <div id="es-yandex-hint" class="info-box">
+      1. Создайте <b>3 бесплатных аккаунта</b> на <a href="https://mail.yandex.ru" target="_blank" rel="noopener">mail.yandex.ru</a> (нужен телефон)<br>
+      2. В каждом аккаунте: <b>Настройки → Почтовые программы → SMTP включить</b><br>
+      3. Там же создайте <b>Пароль приложения</b> (не основной пароль)<br>
+      4. Введите email и пароль приложения для каждого КП ниже
+    </div>
+    <div id="es-resend-hint" class="info-box" style="display:none">
+      1. Зайдите на <a href="https://resend.com" target="_blank" rel="noopener">resend.com</a> → «Sign in with GitHub»<br>
+      2. Добавьте домен: Domains → Add Domain<br>
+      3. Создайте API-ключ: API Keys → Create (начинается с <b>re_</b>)
     </div>
     <div id="es-mailjet-hint" class="info-box" style="display:none">
       1. Зарегистрируйтесь на <a href="https://mailjet.com" target="_blank" rel="noopener">mailjet.com</a><br>
@@ -569,29 +575,50 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
       3. API Key + Secret Key — вставьте через двоеточие: <b>key:secret</b>
     </div>
 
-    <div class="fg" style="margin-bottom:16px">
+    <!-- SMTP-аккаунты (Яндекс/Mail.ru) -->
+    <div id="es-smtp-fields">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px">Email-аккаунт для каждого КП</div>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:8px">
+        <div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">КП №1 — базовая цена</div>
+          <div class="form-grid-2" style="gap:8px">
+            <input type="email" id="smtp-email-0" placeholder="kp1@yandex.ru" autocomplete="off">
+            <input type="password" id="smtp-pass-0" placeholder="Пароль приложения" autocomplete="new-password">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">КП №2 — +2%</div>
+          <div class="form-grid-2" style="gap:8px">
+            <input type="email" id="smtp-email-1" placeholder="kp2@yandex.ru" autocomplete="off">
+            <input type="password" id="smtp-pass-1" placeholder="Пароль приложения" autocomplete="new-password">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">КП №3 — +4%</div>
+          <div class="form-grid-2" style="gap:8px">
+            <input type="email" id="smtp-email-2" placeholder="kp3@yandex.ru" autocomplete="off">
+            <input type="password" id="smtp-pass-2" placeholder="Пароль приложения" autocomplete="new-password">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API-ключ и домен (Resend/Mailjet) -->
+    <div id="es-apikey-wrap" class="fg" style="margin-bottom:16px;display:none">
       <label>API-ключ</label>
       <input type="password" id="es-apikey" placeholder="re_xxxxxxxx..." autocomplete="off">
     </div>
-    <div class="fg" style="margin-bottom:20px">
-      <label>Ваш домен (для генерации адресов отправителей)</label>
-      <input type="text" id="es-domain" placeholder="partaexpert.ru" autocomplete="off">
+    <div id="es-domain-wrap" class="fg" style="margin-bottom:16px;display:none">
+      <label>Ваш домен</label>
+      <input type="text" id="es-domain" placeholder="company.ru" autocomplete="off">
       <span style="font-size:12px;color:var(--muted)">Домен должен быть верифицирован у провайдера</span>
     </div>
-
-    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Адреса отправителей (генерируются при сохранении)</div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:12px;font-weight:700;min-width:44px;color:var(--muted)">КП №1</span>
-        <span class="email-chip" id="es-addr-0" style="flex:1">— не сгенерирован —</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:12px;font-weight:700;min-width:44px;color:var(--muted)">КП №2</span>
-        <span class="email-chip" id="es-addr-1" style="flex:1">— не сгенерирован —</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:12px;font-weight:700;min-width:44px;color:var(--muted)">КП №3</span>
-        <span class="email-chip" id="es-addr-2" style="flex:1">— не сгенерирован —</span>
+    <div id="es-addr-section" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Сгенерированные адреса отправителей</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:700;min-width:44px;color:var(--muted)">КП №1</span><span class="email-chip" id="es-addr-0" style="flex:1">—</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:700;min-width:44px;color:var(--muted)">КП №2</span><span class="email-chip" id="es-addr-1" style="flex:1">—</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:700;min-width:44px;color:var(--muted)">КП №3</span><span class="email-chip" id="es-addr-2" style="flex:1">—</span></div>
       </div>
     </div>
 
@@ -1716,6 +1743,9 @@ function randPart() {
 
 function getOrCreateSenderEmail(kpIdx) {
   const cfg = loadEmailCfg();
+  if (cfg.provider === 'yandex') {
+    return (cfg.smtpAccounts && cfg.smtpAccounts[kpIdx] && cfg.smtpAccounts[kpIdx].email) || '';
+  }
   if (!cfg.senderEmails) cfg.senderEmails = ['', '', ''];
   if (!cfg.senderEmails[kpIdx] && cfg.domain) {
     cfg.senderEmails[kpIdx] = `kp${kpIdx + 1}-${randPart()}@${cfg.domain}`;
@@ -1742,20 +1772,30 @@ function updateSendStrip() {
   const addr = getOrCreateSenderEmail(activePvIdx);
   const chip = document.getElementById('active-sender-chip');
   const regenBtn = document.getElementById('active-regen-btn');
-  if (chip) chip.textContent = addr || (cfg.apiKey ? 'укажите домен' : 'не настроено');
-  if (regenBtn) regenBtn.style.display = cfg.domain ? '' : 'none';
+  if (chip) chip.textContent = addr || 'не настроено';
+  const canRegen = cfg.domain && cfg.provider !== 'yandex';
+  if (regenBtn) regenBtn.style.display = canRegen ? '' : 'none';
 }
 
 function openEmailSettings() {
   const cfg = loadEmailCfg();
-  document.getElementById('es-provider').value = cfg.provider || 'resend';
+  document.getElementById('es-provider').value = cfg.provider || 'yandex';
   document.getElementById('es-apikey').value = cfg.apiKey || '';
   document.getElementById('es-domain').value = cfg.domain || '';
+
+  const accs = cfg.smtpAccounts || [{}, {}, {}];
+  [0, 1, 2].forEach(i => {
+    const a = accs[i] || {};
+    document.getElementById('smtp-email-' + i).value = a.email || '';
+    document.getElementById('smtp-pass-' + i).value  = a.password || '';
+  });
+
   updateEmailSettingsUI();
+
   const emails = cfg.senderEmails || ['', '', ''];
   [0, 1, 2].forEach(i => {
     const el = document.getElementById('es-addr-' + i);
-    if (el) el.textContent = emails[i] || '— не сгенерирован —';
+    if (el) el.textContent = emails[i] || '—';
   });
   document.getElementById('email-settings-modal').classList.add('open');
 }
@@ -1766,36 +1806,48 @@ function closeEmailSettings() {
 
 function updateEmailSettingsUI() {
   const p = document.getElementById('es-provider').value;
-  document.getElementById('es-resend-hint').style.display = p === 'resend' ? '' : 'none';
+  const isSmtp = p === 'yandex';
+  document.getElementById('es-yandex-hint').style.display  = isSmtp ? '' : 'none';
+  document.getElementById('es-resend-hint').style.display  = p === 'resend'  ? '' : 'none';
   document.getElementById('es-mailjet-hint').style.display = p === 'mailjet' ? '' : 'none';
+  document.getElementById('es-smtp-fields').style.display  = isSmtp ? '' : 'none';
+  document.getElementById('es-apikey-wrap').style.display  = isSmtp ? 'none' : '';
+  document.getElementById('es-domain-wrap').style.display  = isSmtp ? 'none' : '';
+  document.getElementById('es-addr-section').style.display = isSmtp ? 'none' : '';
 }
 
 function saveEmailSettings() {
-  const apiKey = document.getElementById('es-apikey').value.trim();
-  const domain = document.getElementById('es-domain').value.trim().toLowerCase().replace(/^@+/, '').replace(/\/+$/, '');
   const provider = document.getElementById('es-provider').value;
-  if (!apiKey) { alert('Введите API-ключ.'); return; }
-
   const cfg = loadEmailCfg();
-  const domainChanged = domain && domain !== cfg.domain;
   cfg.provider = provider;
-  cfg.apiKey = apiKey;
-  cfg.domain = domain;
 
-  if (domain && (domainChanged || !cfg.senderEmails || cfg.senderEmails.every(e => !e))) {
-    cfg.senderEmails = [
-      `kp1-${randPart()}@${domain}`,
-      `kp2-${randPart()}@${domain}`,
-      `kp3-${randPart()}@${domain}`
-    ];
+  if (provider === 'yandex') {
+    const accs = [0, 1, 2].map(i => ({
+      email:    document.getElementById('smtp-email-' + i).value.trim(),
+      password: document.getElementById('smtp-pass-' + i).value
+    }));
+    if (!accs.some(a => a.email)) { alert('Введите хотя бы один email-аккаунт.'); return; }
+    cfg.smtpAccounts = accs;
+    delete cfg.apiKey; delete cfg.domain; delete cfg.senderEmails;
+  } else {
+    const apiKey = document.getElementById('es-apikey').value.trim();
+    const domain = document.getElementById('es-domain').value.trim().toLowerCase().replace(/^@+/, '').replace(/\/+$/, '');
+    if (!apiKey) { alert('Введите API-ключ.'); return; }
+    const oldDomain = cfg.domain || '';
+    cfg.apiKey = apiKey;
+    cfg.domain = domain;
+    delete cfg.smtpAccounts;
+    if (domain && (domain !== oldDomain || !cfg.senderEmails || cfg.senderEmails.every(e => !e))) {
+      cfg.senderEmails = [`kp1-${randPart()}@${domain}`, `kp2-${randPart()}@${domain}`, `kp3-${randPart()}@${domain}`];
+    }
+    const emails = cfg.senderEmails || ['', '', ''];
+    [0, 1, 2].forEach(i => {
+      const el = document.getElementById('es-addr-' + i);
+      if (el) el.textContent = emails[i] || '—';
+    });
   }
-  saveEmailCfg(cfg);
 
-  const emails = cfg.senderEmails || ['', '', ''];
-  [0, 1, 2].forEach(i => {
-    const el = document.getElementById('es-addr-' + i);
-    if (el) el.textContent = emails[i] || '— укажите домен —';
-  });
+  saveEmailCfg(cfg);
   updateSendStrip();
   closeEmailSettings();
   showLoadToast('Настройки email сохранены');
@@ -1803,18 +1855,24 @@ function saveEmailSettings() {
 
 function openSendModal() {
   const cfg = loadEmailCfg();
-  if (!cfg.apiKey) {
-    if (confirm('Для отправки email необходимо настроить API-ключ.\nОткрыть настройки?')) openEmailSettings();
+  const isYandex = cfg.provider === 'yandex';
+  const ready = isYandex
+    ? (cfg.smtpAccounts && cfg.smtpAccounts[activePvIdx] && cfg.smtpAccounts[activePvIdx].email)
+    : cfg.apiKey;
+
+  if (!ready) {
+    if (confirm('Для отправки email необходимо настроить аккаунты.\nОткрыть настройки?')) openEmailSettings();
     return;
   }
+
   const labels = ['КП №1 (базовая цена)', 'КП №2 (+2%)', 'КП №3 (+4%)'];
   document.getElementById('send-modal-title').textContent = 'Отправить ' + labels[activePvIdx];
 
   const addr = getOrCreateSenderEmail(activePvIdx);
   const addrEl = document.getElementById('send-from-addr');
-  if (addrEl) addrEl.textContent = addr || (cfg.domain ? '—' : 'нет домена');
+  if (addrEl) addrEl.textContent = addr || '—';
   const regenBtn = document.getElementById('send-regen-btn');
-  if (regenBtn) regenBtn.style.display = cfg.domain ? '' : 'none';
+  if (regenBtn) regenBtn.style.display = (cfg.domain && !isYandex) ? '' : 'none';
 
   const supName = gv('s' + activePvIdx + '-name') || 'Поставщик';
   const kpNum = gv('kp-number') || '';
@@ -1856,39 +1914,56 @@ async function doSendKPEmail() {
   btn.textContent = 'Отправляю…';
 
   try {
-    let response;
-    if (cfg.provider === 'mailjet') {
-      const parts = (cfg.apiKey || ':').split(':');
-      response = await fetch('https://api.mailjet.com/v3.1/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Basic ' + btoa(parts[0] + ':' + (parts[1] || '')),
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          Messages: [{ From: { Email: fromEmail, Name: supName }, To: [{ Email: toEmail }], Subject: subject, HTMLPart: emailHtml }]
-        })
+    if (cfg.provider === 'yandex') {
+      // SMTP через smtpjs.com
+      if (!window.Email) {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://smtpjs.com/v3/smtp.js';
+          s.onload = res;
+          s.onerror = () => rej(new Error('Не удалось загрузить SMTP.js — проверьте интернет'));
+          document.head.appendChild(s);
+        });
+      }
+      const acc = cfg.smtpAccounts[activePvIdx];
+      const em = acc.email.toLowerCase();
+      const host = (em.endsWith('@mail.ru') || em.endsWith('@bk.ru') || em.endsWith('@list.ru') || em.endsWith('@inbox.ru'))
+        ? 'smtp.mail.ru' : 'smtp.yandex.ru';
+      const result = await Email.send({
+        Host: host, Username: acc.email, Password: acc.password, Port: 465,
+        To: toEmail,
+        From: `${supName} <${acc.email}>`,
+        Subject: subject,
+        Body: emailHtml
       });
+      if (result !== 'OK') throw new Error(result);
     } else {
-      // Resend (default)
-      response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + cfg.apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: `${supName} <${fromEmail}>`, to: [toEmail], subject, html: emailHtml })
-      });
+      let response;
+      if (cfg.provider === 'mailjet') {
+        const parts = (cfg.apiKey || ':').split(':');
+        response = await fetch('https://api.mailjet.com/v3.1/send', {
+          method: 'POST',
+          headers: { 'Authorization': 'Basic ' + btoa(parts[0] + ':' + (parts[1] || '')), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ Messages: [{ From: { Email: fromEmail, Name: supName }, To: [{ Email: toEmail }], Subject: subject, HTMLPart: emailHtml }] })
+        });
+      } else {
+        response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + cfg.apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from: `${supName} <${fromEmail}>`, to: [toEmail], subject, html: emailHtml })
+        });
+      }
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || err.name || `HTTP ${response.status}`);
+      }
     }
 
-    if (response.ok) {
-      closeSendModal();
-      showLoadToast(`КП отправлено → ${toEmail}`);
-      updateSendStrip();
-    } else {
-      const err = await response.json().catch(() => ({}));
-      const msg = err.message || err.name || `HTTP ${response.status}`;
-      throw new Error(msg);
-    }
+    closeSendModal();
+    showLoadToast(`КП отправлено → ${toEmail}`);
+    updateSendStrip();
   } catch (e) {
-    alert('Ошибка отправки:\n' + e.message + '\n\nПроверьте API-ключ и верификацию домена у провайдера.');
+    alert('Ошибка отправки:\n' + e.message);
   } finally {
     btn.disabled = false;
     btn.textContent = 'Отправить';
