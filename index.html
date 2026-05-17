@@ -202,6 +202,23 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
   .kp-doc-table th { background: #eee !important; -webkit-print-color-adjust: exact; }
 }
 
+/* ── Email Modals ── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.48); backdrop-filter:blur(6px); z-index:9000; align-items:center; justify-content:center; padding:20px; }
+.modal-overlay.open { display:flex; }
+.modal-box { background:#fff; border-radius:20px; padding:32px; max-width:500px; width:100%; box-shadow:0 24px 80px rgba(0,0,0,0.22); animation:modalIn 0.22s ease; max-height:90vh; overflow-y:auto; }
+@keyframes modalIn { from{transform:scale(0.94) translateY(10px);opacity:0} to{transform:none;opacity:1} }
+.modal-title { font-size:20px; font-weight:700; margin-bottom:6px; }
+.modal-sub { font-size:14px; color:var(--muted); margin-bottom:20px; line-height:1.55; }
+.modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
+.email-chip { font-family:monospace; font-size:12px; background:#f0f7ff; border:1.5px solid #c2daf8; border-radius:7px; padding:6px 10px; color:#0055aa; word-break:break-all; }
+.regen-btn { background:none; border:1.5px solid var(--border); cursor:pointer; color:var(--muted); font-size:13px; padding:6px 12px; border-radius:7px; transition:all 0.15s; white-space:nowrap; font-family:var(--f); font-weight:500; }
+.regen-btn:hover { background:#f0f0f5; color:var(--text); border-color:#aaa; }
+.info-box { background:#fff8e6; border:1.5px solid #ffd966; border-radius:10px; padding:14px 16px; font-size:13px; line-height:1.65; margin-bottom:16px; }
+.info-box a { color:#b07800; text-decoration:none; font-weight:600; }
+.info-box a:hover { text-decoration:underline; }
+.send-strip { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:18px; padding:12px 16px; background:#f5f5f7; border-radius:10px; }
+.send-strip-label { font-size:13px; color:var(--muted); font-weight:500; white-space:nowrap; }
+
 @media (max-width: 768px) {
   h1 { font-size: 30px; }
   .totals-grid { grid-template-columns: 1fr; }
@@ -478,12 +495,21 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 <div class="card" id="sec-preview">
   <div class="sec-head">
     <div class="sec-title"><span class="step">7</span><h2>Предпросмотр КП</h2></div>
-    <button class="btn btn-secondary btn-sm" onclick="refreshPreview()">↻ Обновить</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="openEmailSettings()">✉ Email-настройки</button>
+      <button class="btn btn-secondary btn-sm" onclick="refreshPreview()">↻ Обновить</button>
+    </div>
   </div>
   <div class="ptabs">
     <button class="ptab active" id="ptab-0" onclick="showPreview(0)">КП №1</button>
     <button class="ptab" id="ptab-1" onclick="showPreview(1)">КП №2 (+2%)</button>
     <button class="ptab" id="ptab-2" onclick="showPreview(2)">КП №3 (+4%)</button>
+  </div>
+  <div class="send-strip">
+    <span class="send-strip-label">Отправить с адреса:</span>
+    <span class="email-chip" id="active-sender-chip">не настроено</span>
+    <button class="regen-btn" id="active-regen-btn" onclick="regenerateActiveSenderEmail()" title="Сгенерировать новый уникальный адрес для этого КП" style="display:none">↻ Новый адрес</button>
+    <button class="btn btn-primary btn-sm" onclick="openSendModal()">Отправить КП</button>
   </div>
   <div class="preview-wrap">
     <div class="preview-panel active" id="pv-0"><div id="kp-doc-0"></div></div>
@@ -513,6 +539,98 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 
 </div><!-- /container -->
 
+<!-- EMAIL SETTINGS MODAL -->
+<div class="modal-overlay" id="email-settings-modal" onclick="if(event.target===this)closeEmailSettings()">
+  <div class="modal-box">
+    <div class="modal-title">Настройки email-отправки</div>
+    <div class="modal-sub">Настройте один раз — и отправляйте КП прямо из браузера с уникальных адресов. Каждое КП уходит с отдельного email.</div>
+
+    <div class="fg" style="margin-bottom:16px">
+      <label>Провайдер</label>
+      <select id="es-provider" onchange="updateEmailSettingsUI()">
+        <option value="brevo">Brevo (Sendinblue) — бесплатно 300 писем/день</option>
+        <option value="mailjet">Mailjet — бесплатно 200 писем/день</option>
+      </select>
+    </div>
+
+    <div id="es-brevo-hint" class="info-box">
+      1. Зарегистрируйтесь на <a href="https://brevo.com" target="_blank" rel="noopener">brevo.com</a><br>
+      2. Верифицируйте домен: Senders &amp; IP → Domains → Add a domain<br>
+      3. Создайте API-ключ: SMTP &amp; API → API Keys → Create<br>
+      4. Вставьте ключ ниже
+    </div>
+    <div id="es-mailjet-hint" class="info-box" style="display:none">
+      1. Зарегистрируйтесь на <a href="https://mailjet.com" target="_blank" rel="noopener">mailjet.com</a><br>
+      2. Верифицируйте домен в разделе Sender domains<br>
+      3. API Key + Secret Key — вставьте через двоеточие: <b>key:secret</b>
+    </div>
+
+    <div class="fg" style="margin-bottom:16px">
+      <label>API-ключ</label>
+      <input type="password" id="es-apikey" placeholder="xkeysib-..." autocomplete="off">
+    </div>
+    <div class="fg" style="margin-bottom:20px">
+      <label>Ваш домен (для генерации адресов отправителей)</label>
+      <input type="text" id="es-domain" placeholder="partaexpert.ru" autocomplete="off">
+      <span style="font-size:12px;color:var(--muted)">Домен должен быть верифицирован у провайдера</span>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Адреса отправителей (генерируются при сохранении)</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;font-weight:700;min-width:44px;color:var(--muted)">КП №1</span>
+        <span class="email-chip" id="es-addr-0" style="flex:1">— не сгенерирован —</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;font-weight:700;min-width:44px;color:var(--muted)">КП №2</span>
+        <span class="email-chip" id="es-addr-1" style="flex:1">— не сгенерирован —</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;font-weight:700;min-width:44px;color:var(--muted)">КП №3</span>
+        <span class="email-chip" id="es-addr-2" style="flex:1">— не сгенерирован —</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeEmailSettings()">Отмена</button>
+      <button class="btn btn-primary" onclick="saveEmailSettings()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- SEND KP MODAL -->
+<div class="modal-overlay" id="send-modal" onclick="if(event.target===this)closeSendModal()">
+  <div class="modal-box">
+    <div class="modal-title" id="send-modal-title">Отправить КП</div>
+    <div class="modal-sub">КП будет отправлено заказчику как HTML-письмо с полным оформлением.</div>
+
+    <div class="fg" style="margin-bottom:14px">
+      <label>От кого (уникальный адрес отправителя)</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="email-chip" id="send-from-addr" style="flex:1">—</span>
+        <button class="regen-btn" id="send-regen-btn" onclick="regenerateActiveSenderEmail(true)" title="Сгенерировать новый адрес">↻</button>
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:14px">
+      <label>Кому (email заказчика)</label>
+      <input type="email" id="send-to" placeholder="director@school.ru">
+    </div>
+    <div class="fg" style="margin-bottom:14px">
+      <label>Тема письма</label>
+      <input type="text" id="send-subject" placeholder="КП-250517-001 — Коммерческое предложение">
+    </div>
+    <div class="fg">
+      <label>Сопроводительное сообщение (необязательно)</label>
+      <textarea id="send-note" rows="3" placeholder="Уважаемый руководитель, направляем Вам наше коммерческое предложение..."></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeSendModal()">Отмена</button>
+      <button class="btn btn-primary" id="send-submit-btn" onclick="doSendKPEmail()">Отправить</button>
+    </div>
+  </div>
+</div>
+
 <!-- PRINT AREA -->
 <div id="print-area">
   <div class="kp-print-page" id="print-kp-0"></div>
@@ -531,6 +649,7 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 let products = [];
 let logoBase64 = null;
 let productPhotos = {}; // { rowIndex: base64 }
+let activePvIdx = 0;
 
 const DEFAULT_PREAMBULE = 'Уважаемый руководитель! Предлагаем Вам рассмотреть наше коммерческое предложение на поставку школьной мебели. Мы готовы обеспечить высокое качество продукции, своевременную доставку и профессиональную сборку в установленные сроки.';
 
@@ -1074,10 +1193,12 @@ function calculateAll() {
 // ═══════════════════════════════════════════════
 
 function showPreview(idx) {
+  activePvIdx = idx;
   [0, 1, 2].forEach(i => {
     document.getElementById('ptab-' + i).classList.toggle('active', i === idx);
     document.getElementById('pv-' + i).classList.toggle('active', i === idx);
   });
+  updateSendStrip();
 }
 
 function refreshPreview() {
@@ -1571,6 +1692,205 @@ function clearFormConfirm() {
 }
 
 // ═══════════════════════════════════════════════
+// EMAIL
+// ═══════════════════════════════════════════════
+
+function loadEmailCfg() {
+  return JSON.parse(localStorage.getItem('email_settings') || '{}');
+}
+
+function saveEmailCfg(data) {
+  localStorage.setItem('email_settings', JSON.stringify(data));
+}
+
+function randPart() {
+  const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+  let s = '';
+  for (let i = 0; i < 7; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+function getOrCreateSenderEmail(kpIdx) {
+  const cfg = loadEmailCfg();
+  if (!cfg.senderEmails) cfg.senderEmails = ['', '', ''];
+  if (!cfg.senderEmails[kpIdx] && cfg.domain) {
+    cfg.senderEmails[kpIdx] = `kp${kpIdx + 1}-${randPart()}@${cfg.domain}`;
+    saveEmailCfg(cfg);
+  }
+  return cfg.senderEmails[kpIdx] || '';
+}
+
+function regenerateActiveSenderEmail(updateModalToo) {
+  const cfg = loadEmailCfg();
+  if (!cfg.domain) { alert('Укажите домен в настройках email.'); return; }
+  if (!cfg.senderEmails) cfg.senderEmails = ['', '', ''];
+  cfg.senderEmails[activePvIdx] = `kp${activePvIdx + 1}-${randPart()}@${cfg.domain}`;
+  saveEmailCfg(cfg);
+  updateSendStrip();
+  if (updateModalToo) {
+    const el = document.getElementById('send-from-addr');
+    if (el) el.textContent = cfg.senderEmails[activePvIdx];
+  }
+}
+
+function updateSendStrip() {
+  const cfg = loadEmailCfg();
+  const addr = getOrCreateSenderEmail(activePvIdx);
+  const chip = document.getElementById('active-sender-chip');
+  const regenBtn = document.getElementById('active-regen-btn');
+  if (chip) chip.textContent = addr || (cfg.apiKey ? 'укажите домен' : 'не настроено');
+  if (regenBtn) regenBtn.style.display = cfg.domain ? '' : 'none';
+}
+
+function openEmailSettings() {
+  const cfg = loadEmailCfg();
+  document.getElementById('es-provider').value = cfg.provider || 'brevo';
+  document.getElementById('es-apikey').value = cfg.apiKey || '';
+  document.getElementById('es-domain').value = cfg.domain || '';
+  updateEmailSettingsUI();
+  const emails = cfg.senderEmails || ['', '', ''];
+  [0, 1, 2].forEach(i => {
+    const el = document.getElementById('es-addr-' + i);
+    if (el) el.textContent = emails[i] || '— не сгенерирован —';
+  });
+  document.getElementById('email-settings-modal').classList.add('open');
+}
+
+function closeEmailSettings() {
+  document.getElementById('email-settings-modal').classList.remove('open');
+}
+
+function updateEmailSettingsUI() {
+  const p = document.getElementById('es-provider').value;
+  document.getElementById('es-brevo-hint').style.display = p === 'brevo' ? '' : 'none';
+  document.getElementById('es-mailjet-hint').style.display = p === 'mailjet' ? '' : 'none';
+}
+
+function saveEmailSettings() {
+  const apiKey = document.getElementById('es-apikey').value.trim();
+  const domain = document.getElementById('es-domain').value.trim().toLowerCase().replace(/^@+/, '').replace(/\/+$/, '');
+  const provider = document.getElementById('es-provider').value;
+  if (!apiKey) { alert('Введите API-ключ.'); return; }
+
+  const cfg = loadEmailCfg();
+  const domainChanged = domain && domain !== cfg.domain;
+  cfg.provider = provider;
+  cfg.apiKey = apiKey;
+  cfg.domain = domain;
+
+  if (domain && (domainChanged || !cfg.senderEmails || cfg.senderEmails.every(e => !e))) {
+    cfg.senderEmails = [
+      `kp1-${randPart()}@${domain}`,
+      `kp2-${randPart()}@${domain}`,
+      `kp3-${randPart()}@${domain}`
+    ];
+  }
+  saveEmailCfg(cfg);
+
+  const emails = cfg.senderEmails || ['', '', ''];
+  [0, 1, 2].forEach(i => {
+    const el = document.getElementById('es-addr-' + i);
+    if (el) el.textContent = emails[i] || '— укажите домен —';
+  });
+  updateSendStrip();
+  closeEmailSettings();
+  showLoadToast('Настройки email сохранены');
+}
+
+function openSendModal() {
+  const cfg = loadEmailCfg();
+  if (!cfg.apiKey) {
+    if (confirm('Для отправки email необходимо настроить API-ключ.\nОткрыть настройки?')) openEmailSettings();
+    return;
+  }
+  const labels = ['КП №1 (базовая цена)', 'КП №2 (+2%)', 'КП №3 (+4%)'];
+  document.getElementById('send-modal-title').textContent = 'Отправить ' + labels[activePvIdx];
+
+  const addr = getOrCreateSenderEmail(activePvIdx);
+  const addrEl = document.getElementById('send-from-addr');
+  if (addrEl) addrEl.textContent = addr || (cfg.domain ? '—' : 'нет домена');
+  const regenBtn = document.getElementById('send-regen-btn');
+  if (regenBtn) regenBtn.style.display = cfg.domain ? '' : 'none';
+
+  const supName = gv('s' + activePvIdx + '-name') || 'Поставщик';
+  const kpNum = gv('kp-number') || '';
+  document.getElementById('send-subject').value = (kpNum ? kpNum + ' — ' : '') + 'Коммерческое предложение от ' + supName;
+  document.getElementById('send-to').value = '';
+  document.getElementById('send-note').value = '';
+
+  document.getElementById('send-modal').classList.add('open');
+  setTimeout(() => document.getElementById('send-to').focus(), 120);
+}
+
+function closeSendModal() {
+  document.getElementById('send-modal').classList.remove('open');
+}
+
+async function doSendKPEmail() {
+  const cfg = loadEmailCfg();
+  if (!cfg.apiKey) { alert('API-ключ не настроен.'); return; }
+
+  const toEmail = document.getElementById('send-to').value.trim();
+  if (!toEmail || !toEmail.includes('@')) { alert('Укажите корректный email получателя.'); return; }
+
+  const fromEmail = getOrCreateSenderEmail(activePvIdx);
+  if (!fromEmail) { alert('Адрес отправителя не сгенерирован.\nУкажите домен в настройках email.'); return; }
+
+  const supName = gv('s' + activePvIdx + '-name') || 'Поставщик';
+  const subject = document.getElementById('send-subject').value.trim() || 'Коммерческое предложение';
+  const note = document.getElementById('send-note').value.trim();
+  const markups = [0, 0.02, 0.04];
+  const kpHtml = buildKPHTML(activePvIdx, markups[activePvIdx]);
+
+  const noteBlock = note
+    ? `<div style="max-width:780px;margin:0 auto 20px;background:#fff;border-radius:8px;padding:20px 24px;font-size:14px;line-height:1.7;font-family:Arial,sans-serif;">${note.replace(/\n/g, '<br>')}</div>`
+    : '';
+  const emailHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:20px;background:#e8e4f0;">${noteBlock}${kpHtml}</body></html>`;
+
+  const btn = document.getElementById('send-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Отправляю…';
+
+  try {
+    let response;
+    if (cfg.provider === 'mailjet') {
+      const parts = (cfg.apiKey || ':').split(':');
+      response = await fetch('https://api.mailjet.com/v3.1/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + btoa(parts[0] + ':' + (parts[1] || '')),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          Messages: [{ From: { Email: fromEmail, Name: supName }, To: [{ Email: toEmail }], Subject: subject, HTMLPart: emailHtml }]
+        })
+      });
+    } else {
+      response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'api-key': cfg.apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sender: { name: supName, email: fromEmail }, to: [{ email: toEmail }], subject, htmlContent: emailHtml })
+      });
+    }
+
+    if (response.ok) {
+      closeSendModal();
+      showLoadToast(`КП отправлено → ${toEmail}`);
+      updateSendStrip();
+    } else {
+      const err = await response.json().catch(() => ({}));
+      const msg = err.message || (err.Messages && err.Messages[0] && err.Messages[0].Errors && err.Messages[0].Errors[0] && err.Messages[0].Errors[0].ErrorMessage) || `HTTP ${response.status}`;
+      throw new Error(msg);
+    }
+  } catch (e) {
+    alert('Ошибка отправки:\n' + e.message + '\n\nПроверьте API-ключ и верификацию домена у провайдера.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Отправить';
+  }
+}
+
+// ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
 
@@ -1583,6 +1903,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   refreshSavedSelects();
   generateKPNumber();
+  updateSendStrip();
 
   const saved = localStorage.getItem('kp_form_data');
   if (saved) {
