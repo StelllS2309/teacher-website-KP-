@@ -561,9 +561,10 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
     <div id="es-yandex-hint" class="info-box">
       Для каждого аккаунта зарегистрируйтесь на <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> (бесплатно, 200 писем/мес):<br>
       1. <b>Email Services → Add New Service → Custom SMTP</b><br>
-      &nbsp;&nbsp; Host: <code>smtp.mail.ru</code> · Port: <code>465</code> · TLS вкл. · логин/пароль от почты<br>
-      2. <b>Email Templates → Create New</b> · в шаблоне укажите:<br>
-      &nbsp;&nbsp; To: <code>{{to_email}}</code> · Subject: <code>{{subject}}</code> · Body (HTML): <code>{{{html_content}}}</code><br>
+      &nbsp;&nbsp; Host: <code>smtp.mail.ru</code> · Port: <code>465</code> · TLS вкл. · <b>пароль приложения</b> (не основной!)<br>
+      2. <b>Email Templates → Create New</b> · обязательно заполните:<br>
+      &nbsp;&nbsp; ⚠️ <b>To Email:</b> <code>{{to_email}}</code> — иначе письма придут вам, а не заказчику<br>
+      &nbsp;&nbsp; Subject: <code>{{subject}}</code> · Body (HTML): <code>{{{html_content}}}</code><br>
       3. <b>Account → General</b> → скопируйте <b>Public Key</b><br>
       4. Вставьте Public Key, Service ID и Template ID ниже
     </div>
