@@ -552,17 +552,20 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
     <div class="fg" style="margin-bottom:16px">
       <label>Способ отправки</label>
       <select id="es-provider" onchange="updateEmailSettingsUI()">
-        <option value="yandex">Mail.ru / BK.ru — без домена, бесплатно ✓</option>
+        <option value="yandex">Mail.ru / BK.ru через EmailJS — без домена ✓</option>
         <option value="resend">Resend — нужен домен, 100 писем/день</option>
         <option value="mailjet">Mailjet — нужен домен, 200 писем/день</option>
       </select>
     </div>
 
     <div id="es-yandex-hint" class="info-box">
-      Для каждого аккаунта Mail.ru / BK.ru:<br>
-      1. Войдите → <b>Настройки → Безопасность → Пароли для внешних приложений → Создать</b><br>
-      2. Название: «КП», скопируйте сгенерированный пароль<br>
-      3. Вставьте его в поле «Пароль» ниже (основной пароль не подойдёт)
+      Для каждого аккаунта зарегистрируйтесь на <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> (бесплатно, 200 писем/мес):<br>
+      1. <b>Email Services → Add New Service → Custom SMTP</b><br>
+      &nbsp;&nbsp; Host: <code>smtp.mail.ru</code> · Port: <code>465</code> · TLS вкл. · логин/пароль от почты<br>
+      2. <b>Email Templates → Create New</b> · в шаблоне укажите:<br>
+      &nbsp;&nbsp; To: <code>{{to_email}}</code> · Subject: <code>{{subject}}</code> · Body (HTML): <code>{{{html_content}}}</code><br>
+      3. <b>Account → General</b> → скопируйте <b>Public Key</b><br>
+      4. Вставьте Public Key, Service ID и Template ID ниже
     </div>
     <div id="es-resend-hint" class="info-box" style="display:none">
       1. Зайдите на <a href="https://resend.com" target="_blank" rel="noopener">resend.com</a> → «Sign in with GitHub»<br>
@@ -575,30 +578,33 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
       3. API Key + Secret Key — вставьте через двоеточие: <b>key:secret</b>
     </div>
 
-    <!-- SMTP-аккаунты (Яндекс/Mail.ru) -->
+    <!-- EmailJS-аккаунты -->
     <div id="es-smtp-fields">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px">Email-аккаунт для каждого КП</div>
-      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px">EmailJS — по аккаунту на каждое КП</div>
+      <div style="display:flex;flex-direction:column;gap:18px;margin-bottom:8px">
         <div>
-          <div style="font-size:12px;font-weight:700;margin-bottom:6px">КП №1 — базовая цена</div>
-          <div class="form-grid-2" style="gap:8px">
-            <input type="email" id="smtp-email-0" placeholder="mebel_torg1605@bk.ru" autocomplete="off">
-            <input type="password" id="smtp-pass-0" placeholder="Пароль приложения" autocomplete="new-password">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">КП №1 — <span style="font-weight:400;color:var(--muted)">mebel_torg1605@bk.ru</span></div>
+          <div class="form-grid-2" style="gap:8px;margin-bottom:6px">
+            <div class="fg"><label>Public Key</label><input type="password" id="ejs-pk-0" placeholder="abc123..." autocomplete="off"></div>
+            <div class="fg"><label>Service ID</label><input type="text" id="ejs-sid-0" placeholder="service_xxxxxxx" autocomplete="off"></div>
           </div>
+          <div class="fg"><label>Template ID</label><input type="text" id="ejs-tid-0" placeholder="template_xxxxxxx" autocomplete="off"></div>
         </div>
         <div>
-          <div style="font-size:12px;font-weight:700;margin-bottom:6px">КП №2 — +2%</div>
-          <div class="form-grid-2" style="gap:8px">
-            <input type="email" id="smtp-email-1" placeholder="opt2309@mail.ru" autocomplete="off">
-            <input type="password" id="smtp-pass-1" placeholder="Пароль приложения" autocomplete="new-password">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">КП №2 — <span style="font-weight:400;color:var(--muted)">opt2309@mail.ru</span></div>
+          <div class="form-grid-2" style="gap:8px;margin-bottom:6px">
+            <div class="fg"><label>Public Key</label><input type="password" id="ejs-pk-1" placeholder="abc123..." autocomplete="off"></div>
+            <div class="fg"><label>Service ID</label><input type="text" id="ejs-sid-1" placeholder="service_xxxxxxx" autocomplete="off"></div>
           </div>
+          <div class="fg"><label>Template ID</label><input type="text" id="ejs-tid-1" placeholder="template_xxxxxxx" autocomplete="off"></div>
         </div>
         <div>
-          <div style="font-size:12px;font-weight:700;margin-bottom:6px">КП №3 — +4%</div>
-          <div class="form-grid-2" style="gap:8px">
-            <input type="email" id="smtp-email-2" placeholder="parta_opt@mail.ru" autocomplete="off">
-            <input type="password" id="smtp-pass-2" placeholder="Пароль приложения" autocomplete="new-password">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">КП №3 — <span style="font-weight:400;color:var(--muted)">parta_opt@mail.ru</span></div>
+          <div class="form-grid-2" style="gap:8px;margin-bottom:6px">
+            <div class="fg"><label>Public Key</label><input type="password" id="ejs-pk-2" placeholder="abc123..." autocomplete="off"></div>
+            <div class="fg"><label>Service ID</label><input type="text" id="ejs-sid-2" placeholder="service_xxxxxxx" autocomplete="off"></div>
           </div>
+          <div class="fg"><label>Template ID</label><input type="text" id="ejs-tid-2" placeholder="template_xxxxxxx" autocomplete="off"></div>
         </div>
       </div>
     </div>
@@ -1744,7 +1750,8 @@ function randPart() {
 function getOrCreateSenderEmail(kpIdx) {
   const cfg = loadEmailCfg();
   if (cfg.provider === 'yandex') {
-    return (cfg.smtpAccounts && cfg.smtpAccounts[kpIdx] && cfg.smtpAccounts[kpIdx].email) || '';
+    const EMAILS = ['mebel_torg1605@bk.ru', 'opt2309@mail.ru', 'parta_opt@mail.ru'];
+    return (cfg.ejsAccounts && cfg.ejsAccounts[kpIdx] && cfg.ejsAccounts[kpIdx].email) || EMAILS[kpIdx] || '';
   }
   if (!cfg.senderEmails) cfg.senderEmails = ['', '', ''];
   if (!cfg.senderEmails[kpIdx] && cfg.domain) {
@@ -1783,11 +1790,12 @@ function openEmailSettings() {
   document.getElementById('es-apikey').value = cfg.apiKey || '';
   document.getElementById('es-domain').value = cfg.domain || '';
 
-  const accs = cfg.smtpAccounts || [{}, {}, {}];
+  const accs = cfg.ejsAccounts || [{}, {}, {}];
   [0, 1, 2].forEach(i => {
     const a = accs[i] || {};
-    document.getElementById('smtp-email-' + i).value = a.email || '';
-    document.getElementById('smtp-pass-' + i).value  = a.password || '';
+    document.getElementById('ejs-pk-'  + i).value = a.publicKey  || '';
+    document.getElementById('ejs-sid-' + i).value = a.serviceId  || '';
+    document.getElementById('ejs-tid-' + i).value = a.templateId || '';
   });
 
   updateEmailSettingsUI();
@@ -1822,12 +1830,19 @@ function saveEmailSettings() {
   cfg.provider = provider;
 
   if (provider === 'yandex') {
+    const EMAILS = ['mebel_torg1605@bk.ru', 'opt2309@mail.ru', 'parta_opt@mail.ru'];
     const accs = [0, 1, 2].map(i => ({
-      email:    document.getElementById('smtp-email-' + i).value.trim(),
-      password: document.getElementById('smtp-pass-' + i).value
+      email:      EMAILS[i],
+      publicKey:  document.getElementById('ejs-pk-'  + i).value.trim(),
+      serviceId:  document.getElementById('ejs-sid-' + i).value.trim(),
+      templateId: document.getElementById('ejs-tid-' + i).value.trim()
     }));
-    if (!accs.some(a => a.email)) { alert('Введите хотя бы один email-аккаунт.'); return; }
-    cfg.smtpAccounts = accs;
+    if (!accs.some(a => a.publicKey && a.serviceId && a.templateId)) {
+      alert('Заполните Public Key, Service ID и Template ID хотя бы для одного КП.');
+      return;
+    }
+    cfg.ejsAccounts = accs;
+    delete cfg.smtpAccounts;
     delete cfg.apiKey; delete cfg.domain; delete cfg.senderEmails;
   } else {
     const apiKey = document.getElementById('es-apikey').value.trim();
@@ -1856,8 +1871,9 @@ function saveEmailSettings() {
 function openSendModal() {
   const cfg = loadEmailCfg();
   const isYandex = cfg.provider === 'yandex';
+  const ejsAcc = cfg.ejsAccounts && cfg.ejsAccounts[activePvIdx];
   const ready = isYandex
-    ? (cfg.smtpAccounts && cfg.smtpAccounts[activePvIdx] && cfg.smtpAccounts[activePvIdx].email)
+    ? (ejsAcc && ejsAcc.publicKey && ejsAcc.serviceId && ejsAcc.templateId)
     : cfg.apiKey;
 
   if (!ready) {
@@ -1893,9 +1909,9 @@ async function doSendKPEmail() {
   const isYandex = cfg.provider === 'yandex';
 
   if (isYandex) {
-    const acc = cfg.smtpAccounts && cfg.smtpAccounts[activePvIdx];
-    if (!acc || !acc.email || !acc.password) {
-      alert(`Для КП №${activePvIdx + 1} не заполнен email или пароль.\nОткройте Email-настройки и проверьте данные.`);
+    const acc = cfg.ejsAccounts && cfg.ejsAccounts[activePvIdx];
+    if (!acc || !acc.publicKey || !acc.serviceId || !acc.templateId) {
+      alert(`Для КП №${activePvIdx + 1} не заполнены данные EmailJS.\nОткройте Email-настройки.`);
       return;
     }
   } else if (!cfg.apiKey) {
@@ -1926,28 +1942,25 @@ async function doSendKPEmail() {
 
   try {
     if (cfg.provider === 'yandex') {
-      // SMTP через smtpjs.com
-      if (!window.Email) {
+      // Отправка через EmailJS
+      if (!window.emailjs) {
         await new Promise((res, rej) => {
           const s = document.createElement('script');
-          s.src = 'https://smtpjs.com/v3/smtp.js';
+          s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
           s.onload = res;
-          s.onerror = () => rej(new Error('Не удалось загрузить SMTP.js — проверьте интернет'));
+          s.onerror = () => rej(new Error('Не удалось загрузить EmailJS — проверьте интернет'));
           document.head.appendChild(s);
         });
       }
-      const acc = cfg.smtpAccounts[activePvIdx];
-      const em = acc.email.toLowerCase();
-      const host = (em.endsWith('@mail.ru') || em.endsWith('@bk.ru') || em.endsWith('@list.ru') || em.endsWith('@inbox.ru'))
-        ? 'smtp.mail.ru' : 'smtp.yandex.ru';
-      const result = await Email.send({
-        Host: host, Username: acc.email, Password: acc.password, Port: 465,
-        To: toEmail,
-        From: `${supName} <${acc.email}>`,
-        Subject: subject,
-        Body: emailHtml
-      });
-      if (result !== 'OK') throw new Error(result);
+      const acc = cfg.ejsAccounts[activePvIdx];
+      // Убираем base64-изображения чтобы не превысить лимит размера письма
+      const emailBody = emailHtml.replace(/src="data:[^"]+"/g, 'src=""');
+      await emailjs.send(
+        acc.serviceId,
+        acc.templateId,
+        { to_email: toEmail, from_name: supName, subject: subject, html_content: emailBody },
+        { publicKey: acc.publicKey }
+      );
     } else {
       let response;
       if (cfg.provider === 'mailjet') {
@@ -1995,15 +2008,10 @@ document.addEventListener('DOMContentLoaded', function () {
   refreshSavedSelects();
   generateKPNumber();
 
-  // Предзаполнить адреса Mail.ru если аккаунты ещё не настроены
+  // Установить провайдер по умолчанию если настройки пустые
   const cfg0 = loadEmailCfg();
-  if (!cfg0.provider && !cfg0.smtpAccounts) {
+  if (!cfg0.provider) {
     cfg0.provider = 'yandex';
-    cfg0.smtpAccounts = [
-      { email: 'mebel_torg1605@bk.ru',  password: '' },
-      { email: 'opt2309@mail.ru',        password: '' },
-      { email: 'parta_opt@mail.ru',      password: '' }
-    ];
     saveEmailCfg(cfg0);
   }
   updateSendStrip();
