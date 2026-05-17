@@ -1890,13 +1890,24 @@ function closeSendModal() {
 
 async function doSendKPEmail() {
   const cfg = loadEmailCfg();
-  if (!cfg.apiKey) { alert('API-ключ не настроен.'); return; }
+  const isYandex = cfg.provider === 'yandex';
+
+  if (isYandex) {
+    const acc = cfg.smtpAccounts && cfg.smtpAccounts[activePvIdx];
+    if (!acc || !acc.email || !acc.password) {
+      alert(`Для КП №${activePvIdx + 1} не заполнен email или пароль.\nОткройте Email-настройки и проверьте данные.`);
+      return;
+    }
+  } else if (!cfg.apiKey) {
+    alert('API-ключ не настроен.');
+    return;
+  }
 
   const toEmail = document.getElementById('send-to').value.trim();
   if (!toEmail || !toEmail.includes('@')) { alert('Укажите корректный email получателя.'); return; }
 
   const fromEmail = getOrCreateSenderEmail(activePvIdx);
-  if (!fromEmail) { alert('Адрес отправителя не сгенерирован.\nУкажите домен в настройках email.'); return; }
+  if (!fromEmail) { alert('Адрес отправителя не настроен.\nОткройте Email-настройки.'); return; }
 
   const supName = gv('s' + activePvIdx + '-name') || 'Поставщик';
   const subject = document.getElementById('send-subject').value.trim() || 'Коммерческое предложение';
