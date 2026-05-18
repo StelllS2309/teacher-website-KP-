@@ -208,14 +208,18 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
   body > *:not(#print-area) { display: none !important; }
   #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
   .kp-print-page {
-    padding: 18mm 20mm; page-break-after: always;
+    padding: 18mm 20mm; page-break-after: always; break-after: page;
     font-family: 'Times New Roman', Times, serif; font-size: 12px;
     line-height: 1.6; color: #000; background: #fff;
   }
-  .kp-print-page:last-child { page-break-after: auto; }
+  .kp-print-page:last-child { page-break-after: auto; break-after: auto; }
+  /* Строки таблицы не разрываются посередине */
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  /* ИТОГО — не отрывать от предыдущей строки */
+  tr:last-child, tr:nth-last-child(2) { break-before: avoid; page-break-before: avoid; }
   .kp-doc-table { width: 100%; border-collapse: collapse; }
   .kp-doc-table th, .kp-doc-table td { border: 1px solid #666; padding: 5px 7px; }
-  .kp-doc-table th { background: #eee !important; -webkit-print-color-adjust: exact; }
+  .kp-doc-table th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
 /* ── Email Modals ── */
@@ -587,6 +591,7 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
   <div class="divider-h"></div>
   <div class="actions-card">
     <button class="btn btn-primary" onclick="printKPs()">🖨 Печать / PDF</button>
+    <button class="btn btn-secondary" onclick="exportWord()">📄 Скачать Word</button>
     <button class="btn btn-secondary" onclick="exportExcel()">📊 Выгрузить в Excel</button>
     <div class="sep"></div>
     <span id="autosave-badge" style="font-size:13px;color:#34c759;opacity:0;transition:opacity 0.4s;font-weight:500;white-space:nowrap;align-self:center"></span>
@@ -1424,11 +1429,10 @@ function buildStyle1(d) {
       <th style="border:1px solid #888;padding:6px 8px;text-align:center">НДС</th>
       <th style="border:1px solid #888;padding:6px 8px;text-align:center">Сумма, руб.</th>
     </tr></thead>
-    <tbody>${tRows}</tbody>
-    <tfoot>
+    <tbody>${tRows}
       <tr style="background:#f5f5f5;font-weight:700"><td colspan="6" style="border:1px solid #ccc;padding:5px 8px;text-align:right">ИТОГО:</td><td style="border:1px solid #ccc;padding:5px 8px;text-align:right">${fmtMoneyRaw(kpTotal)}</td></tr>
       ${hasVAT?`<tr><td colspan="6" style="border:1px solid #ccc;padding:4px 8px;text-align:right">В т.ч. НДС:</td><td style="border:1px solid #ccc;padding:4px 8px;text-align:right">${fmtMoneyRaw(kpVAT)}</td></tr>`:''}
-    </tfoot>
+    </tbody>
   </table>
   <table style="font-size:12px;width:100%;border-collapse:collapse;margin:14px 0">
     <tr><td style="font-weight:700;width:200px;padding:3px 0">Условия поставки:</td><td>${escNl(delivery)||'—'}</td></tr>
@@ -1512,11 +1516,10 @@ function buildStyle2(d) {
         <th style="color:#fff;padding:8px 6px;text-align:center;font-weight:600;font-size:11px">НДС</th>
         <th style="color:#fff;padding:8px 8px;text-align:center;font-weight:600;font-size:11px">Сумма, руб.</th>
       </tr></thead>
-      <tbody>${tRows}</tbody>
-      <tfoot>
+      <tbody>${tRows}
         <tr style="background:${NV};color:#fff;font-weight:700"><td colspan="6" style="padding:8px 10px;text-align:right">ИТОГО:</td><td style="padding:8px 10px;text-align:right">${fmtMoneyRaw(kpTotal)}</td></tr>
         ${hasVAT?`<tr style="background:${NL}"><td colspan="6" style="padding:6px 10px;text-align:right;font-size:11px;color:#555">В т.ч. НДС:</td><td style="padding:6px 10px;text-align:right;font-size:11px">${fmtMoneyRaw(kpVAT)}</td></tr>`:''}
-      </tfoot>
+      </tbody>
     </table>
     <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11.5px">
       <div><span style="font-weight:700;color:${NV}">Условия поставки: </span>${escNl(delivery)||'—'}</div>
@@ -1596,11 +1599,10 @@ function buildStyle3(d) {
         <th style="color:#fff;padding:8px 6px;text-align:center;font-size:11px;font-weight:600">НДС</th>
         <th style="color:#fff;padding:8px 10px;text-align:center;font-size:11px;font-weight:600">Сумма, руб.</th>
       </tr></thead>
-      <tbody>${tRows}</tbody>
-      <tfoot>
+      <tbody>${tRows}
         <tr style="background:${GR};color:#fff;font-weight:700"><td colspan="6" style="padding:8px 10px;text-align:right">ИТОГО:</td><td style="padding:8px 10px;text-align:right">${fmtMoneyRaw(kpTotal)}</td></tr>
         ${hasVAT?`<tr style="background:${GL}"><td colspan="6" style="padding:6px 10px;text-align:right;font-size:11px;color:#555">В т.ч. НДС:</td><td style="padding:6px 10px;text-align:right;font-size:11px">${fmtMoneyRaw(kpVAT)}</td></tr>`:''}
-      </tfoot>
+      </tbody>
     </table>
     <div style="margin-top:16px;font-size:11.5px;color:#444;border-top:1px solid ${GD};padding-top:13px">
       <div style="margin-bottom:4px"><span style="font-weight:700;color:${GR}">Условия поставки: </span>${escNl(delivery)||'—'}</div>
@@ -1627,6 +1629,59 @@ function printKPs() {
     document.getElementById('print-kp-' + i).innerHTML = buildKPHTML(i, markup);
   });
   window.print();
+}
+
+async function exportWord() {
+  const btn = [...document.querySelectorAll('button')].find(b => b.textContent.includes('Скачать Word'));
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Формирую…'; }
+
+  try {
+    // Загружаем html-docx-js если ещё нет
+    if (!window.htmlDocx) {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js';
+        s.onload = res;
+        s.onerror = () => rej(new Error('Не удалось загрузить html-docx-js'));
+        document.head.appendChild(s);
+      });
+    }
+
+    const markups = [0, 0.02, 0.04];
+    const kpBodies = markups.map((markup, i) => {
+      const html = buildKPHTML(i, markup);
+      // Убираем box-shadow (Word не понимает)
+      return html.replace(/box-shadow:[^;]+;/g, '');
+    });
+
+    // Соединяем 3 КП с разрывом страниц
+    const pageBreak = '<br style="page-break-before:always">';
+    const body = kpBodies.join(pageBreak);
+
+    const kpNum = gv('kp-number') || 'КП';
+    const fullHtml = `<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 0; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #999; padding: 5px 8px; }
+  tr { page-break-inside: avoid; }
+</style>
+</head><body>${body}</body></html>`;
+
+    const blob = window.htmlDocx.asBlob(fullHtml, { orientation: 'portrait', margins: { top: 720, right: 720, bottom: 720, left: 720 } });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = kpNum.replace(/[^\w\d-]/g, '_') + '_3КП.docx';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Ошибка экспорта Word:\n' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📄 Скачать Word'; }
+  }
 }
 
 // ═══════════════════════════════════════════════
