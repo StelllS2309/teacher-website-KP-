@@ -418,7 +418,11 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 <div class="card" id="sec-products">
   <div class="sec-head">
     <div class="sec-title"><span class="step">4</span><h2>Таблица товаров</h2></div>
-    <button class="btn btn-primary btn-sm" onclick="addProduct()">+ Добавить позицию</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('kp-import-file').click()" title="Загрузить таблицу товаров из вашего Excel КП">📊 Импорт из Excel</button>
+      <input type="file" id="kp-import-file" accept=".xlsx,.xls" style="display:none" onchange="handleKPImport(event)">
+      <button class="btn btn-primary btn-sm" onclick="addProduct()">+ Добавить позицию</button>
+    </div>
   </div>
   <div class="table-wrap">
     <table class="pt" id="products-table">
@@ -1727,6 +1731,187 @@ function clearFormConfirm() {
   document.getElementById('kp-number').value = '';
   document.getElementById('c-date').value = todayISO();
   generateKPNumber();
+}
+
+// ═══════════════════════════════════════════════
+// ИМПОРТ КП ИЗ EXCEL
+// ═══════════════════════════════════════════════
+
+function handleKPImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  if (products.length > 0 && products.some(p => p.name)) {
+    if (!confirm('Таблица товаров будет заменена данными из файла.\nПродолжить?')) return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'array' });
+      // Ищем лист с таблицей — первый непустой
+      let rows = null;
+      for (const sheetName of wb.SheetNames) {
+        const ws = wb.Sheets[sheetName];
+        const r = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (r.length > 2) { rows = r; break; }
+      }
+      if (!rows) { showLoadToast('Файл пустой или не читается'); return; }
+      parseKPFromRows(rows);
+    } catch(e) {
+      alert('Ошибка чтения Excel:\n' + e.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseKPFromRows(rows) {
+  const norm = s => String(s || '').toLowerCase().trim().replace(/\s+/g, ' ');
+
+  // Ключевые слова для определения колонок
+  const FIELD_KW = {
+    name:  ['наименование', 'наимен', 'товар', 'продукц', 'описание', 'номенклат', 'услуг'],
+    unit:  ['ед.изм', 'ед. изм', 'единиц', 'ед.'],
+    qty:   ['количеств', 'кол-во', 'кол.', 'кол '],
+    price: ['цена за', 'цена ед', 'цена, руб', 'цена без', 'цена с', 'цена'],
+    vat:   ['ндс %', 'ставка ндс', '% ндс', 'ндс,%', 'ндс, %', 'ндс'],
+    sum:   ['сумма', 'стоимость', 'итого по', 'всего']
+  };
+
+  function detectField(cellVal) {
+    const s = norm(cellVal);
+    if (!s) return null;
+    for (const [field, kws] of Object.entries(FIELD_KW)) {
+      if (kws.some(kw => s.includes(kw))) return field;
+    }
+    return null;
+  }
+
+  // Поиск строки-заголовка таблицы (в первых 50 строках)
+  let headerRowIdx = -1;
+  let colMap = {};
+
+  for (let r = 0; r < Math.min(rows.length, 50); r++) {
+    const row = rows[r];
+    const tmp = {};
+    let hits = 0;
+    for (let c = 0; c < row.length; c++) {
+      const field = detectField(row[c]);
+      if (field && tmp[field] === undefined) { tmp[field] = c; hits++; }
+    }
+    // Валидный заголовок: минимум наименование + (цена или кол-во)
+    if (hits >= 2 && tmp.name !== undefined && (tmp.price !== undefined || tmp.qty !== undefined)) {
+      headerRowIdx = r;
+      colMap = tmp;
+      break;
+    }
+  }
+
+  if (headerRowIdx === -1) {
+    // Попробуем хотя бы вытащить метаданные
+    extractKPMeta(rows, rows.length);
+    showLoadToast('Таблица товаров не найдена. Убедитесь, что есть столбцы «Наименование» и «Цена»');
+    return;
+  }
+
+  // Парсинг строк товаров
+  const imported = [];
+  const STOP_RX = /^итого|^всего|^total|^в том числе|^в т\.ч|^подпис|^директор|^исполнитель/i;
+
+  for (let r = headerRowIdx + 1; r < rows.length; r++) {
+    const row = rows[r];
+
+    const rawName = String(row[colMap.name] ?? '').trim();
+    if (!rawName) continue;                     // пустая строка — пропуск
+    if (STOP_RX.test(rawName)) break;           // строка итогов — конец таблицы
+    if (/^\d{1,3}$/.test(rawName)) continue;    // просто порядковый номер
+
+    // Количество
+    const qty = parseNum(row[colMap.qty]) || 1;
+
+    // Цена — ищем сначала в колонке price, потом в любой числовой колонке
+    let price = colMap.price !== undefined ? parseNum(row[colMap.price]) : 0;
+    if (!price && colMap.sum !== undefined && qty) {
+      price = r2(parseNum(row[colMap.sum]) / qty);
+    }
+
+    // НДС
+    let vat = 'none';
+    if (colMap.vat !== undefined) {
+      const vs = norm(row[colMap.vat]).replace(/[%\s]/g, '');
+      if (/^20/.test(vs) || vs === '0.2') vat = '20';
+      else if (/^10/.test(vs) || vs === '0.1') vat = '10';
+      else if (/^5/.test(vs) || vs === '0.05') vat = '5';
+      else if (/^22/.test(vs)) vat = '22';
+    }
+
+    // Единица измерения
+    let unit = 'шт';
+    if (colMap.unit !== undefined) {
+      const us = String(row[colMap.unit] ?? '').trim();
+      if (us) {
+        const KNOWN = ['комплект', 'набор', 'пара', 'м.п.', 'кг', 'уп.', 'шт'];
+        const found = KNOWN.find(u => us.toLowerCase().includes(u.replace('.', '')));
+        unit = found || us;
+      }
+    }
+
+    imported.push({ name: rawName, unit, qty, price, vat });
+  }
+
+  // Метаданные из строк выше таблицы
+  extractKPMeta(rows, headerRowIdx);
+
+  if (imported.length === 0) {
+    showLoadToast('Позиции не распознаны. Проверьте: есть ли данные под заголовком таблицы?');
+    return;
+  }
+
+  products = imported;
+  productPhotos = {};
+  rebuildTable();
+  calculateAll();
+  showLoadToast(`Импортировано ${imported.length} позиций из Excel`);
+}
+
+function parseNum(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  return parseFloat(String(v).replace(/\s/g, '').replace(',', '.')) || 0;
+}
+
+function extractKPMeta(rows, limit) {
+  const cells = rows.slice(0, limit).flat().map(c => String(c || '').trim()).filter(Boolean);
+  const text = cells.join(' ');
+
+  // Дата DD.MM.YYYY
+  const dateM = text.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+  if (dateM) {
+    const el = document.getElementById('c-date');
+    if (el) el.value = `${dateM[3]}-${dateM[2]}-${dateM[1]}`;
+  }
+
+  // Номер КП
+  const kpM = text.match(/(?:кп|к\.п\.|коммерческое\s+предложение\s*[№#]?)\s*[-№#]?\s*([\d][0-9\-]*)/i);
+  if (kpM) {
+    const el = document.getElementById('kp-number');
+    if (el && !el.value) el.value = 'КП-' + kpM[1];
+  }
+
+  // ИНН заказчика — ищем пару "Заказчик ... ИНН ХХХХ"
+  const innM = text.match(/(?:заказчик|покупатель)[^.]{0,120}инн[:\s]*(\d{10,12})/i)
+             || text.match(/инн[:\s]*(\d{10,12})/i);
+  if (innM) {
+    const el = document.getElementById('c-inn');
+    if (el && !el.value) el.value = innM[1];
+  }
+
+  // Наименование заказчика
+  const custM = text.match(/(?:заказчик|покупатель)\s*[:\-]?\s*([А-ЯЁа-яё][А-ЯЁа-яё\s"«»\-]{5,60})/i);
+  if (custM) {
+    const el = document.getElementById('c-name');
+    if (el && !el.value) el.value = custM[1].trim();
+  }
 }
 
 // ═══════════════════════════════════════════════
