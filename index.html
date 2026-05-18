@@ -58,6 +58,16 @@ h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.2px; }
 .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
 .btn-ghost:hover { color: var(--text); border-color: #aaa; }
 .btn-sm { padding: 7px 14px; font-size: 13px; }
+.vat-dropdown { position: relative; display: inline-block; }
+.vat-dropdown-btn { display:flex; align-items:center; gap:6px; padding:7px 13px; font-size:13px; font-weight:600; border:1.5px solid var(--border); border-radius:8px; background:#fff; color:var(--text); cursor:pointer; font-family:var(--f); transition:all 0.15s; white-space:nowrap; }
+.vat-dropdown-btn:hover { border-color:var(--accent); color:var(--accent); }
+.vat-dropdown-btn .vat-arrow { font-size:10px; color:var(--muted); transition:transform 0.15s; }
+.vat-dropdown-btn.open .vat-arrow { transform:rotate(180deg); }
+.vat-dropdown-menu { display:none; position:absolute; top:calc(100% + 6px); left:0; background:#fff; border:1.5px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:200; min-width:140px; overflow:hidden; }
+.vat-dropdown-menu.open { display:block; }
+.vat-dropdown-item { display:block; width:100%; padding:10px 16px; font-size:13px; font-weight:500; text-align:left; border:none; background:transparent; cursor:pointer; font-family:var(--f); color:var(--text); transition:background 0.1s; }
+.vat-dropdown-item:hover { background:#f5f5f7; }
+.vat-dropdown-item.active { color:var(--accent); font-weight:700; background:#f0f7ff; }
 .btn-danger-ghost { background: transparent; color: var(--danger); border: 1.5px solid #fcc; }
 .btn-danger-ghost:hover { background: #fff2f1; }
 
@@ -132,7 +142,6 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 .col-unit { width: 100px; }
 .col-qty { width: 72px; }
 .col-price { width: 110px; }
-.col-vat { width: 120px; }
 .col-sum { width: 110px; text-align: right; font-weight: 600; padding-right: 10px !important; white-space: nowrap; }
 .col-del { width: 38px; text-align: center; }
 .del-btn { background: none; border: none; cursor: pointer; color: #ccc; font-size: 17px; padding: 4px 6px; transition: color 0.18s; border-radius: 4px; }
@@ -418,10 +427,26 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 <div class="card" id="sec-products">
   <div class="sec-head">
     <div class="sec-title"><span class="step">4</span><h2>Таблица товаров</h2></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('kp-import-file').click()" title="Загрузить таблицу товаров из вашего Excel КП">📊 Импорт из Excel</button>
-      <input type="file" id="kp-import-file" accept=".xlsx,.xls" style="display:none" onchange="handleKPImport(event)">
-      <button class="btn btn-primary btn-sm" onclick="addProduct()">+ Добавить позицию</button>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="vat-dropdown" id="vat-dropdown">
+        <button class="vat-dropdown-btn" id="vat-dropdown-btn" onclick="toggleVATMenu()">
+          НДС: <span id="vat-label">Без НДС</span>
+          <span class="vat-arrow">▼</span>
+        </button>
+        <div class="vat-dropdown-menu" id="vat-dropdown-menu">
+          <button class="vat-dropdown-item active" data-vat="none" onclick="setGlobalVAT('none')">Без НДС</button>
+          <button class="vat-dropdown-item" data-vat="5"  onclick="setGlobalVAT('5')">НДС 5%</button>
+          <button class="vat-dropdown-item" data-vat="10" onclick="setGlobalVAT('10')">НДС 10%</button>
+          <button class="vat-dropdown-item" data-vat="20" onclick="setGlobalVAT('20')">НДС 20%</button>
+          <button class="vat-dropdown-item" data-vat="22" onclick="setGlobalVAT('22')">НДС 22%</button>
+        </div>
+        <input type="hidden" id="global-vat" value="none">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('kp-import-file').click()" title="Загрузить таблицу товаров из вашего Excel КП">📊 Импорт из Excel</button>
+        <input type="file" id="kp-import-file" accept=".xlsx,.xls" style="display:none" onchange="handleKPImport(event)">
+        <button class="btn btn-primary btn-sm" onclick="addProduct()">+ Добавить позицию</button>
+      </div>
     </div>
   </div>
   <div class="table-wrap">
@@ -433,7 +458,6 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
           <th class="col-unit">Ед. изм.</th>
           <th class="col-qty">Кол-во</th>
           <th class="col-price">Цена, руб.</th>
-          <th class="col-vat">НДС</th>
           <th class="col-sum">Сумма, руб.</th>
           <th class="col-del"></th>
         </tr>
@@ -470,8 +494,16 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
   </div>
   <div class="divider-h"></div>
   <div class="fg">
-    <label>Преамбула (вступительный текст КП)</label>
-    <textarea id="preambule" rows="3" oninput="onFormInput()"></textarea>
+    <label>Преамбула КП №1 (базовая цена)</label>
+    <textarea id="preambule-0" rows="3" oninput="onFormInput()"></textarea>
+  </div>
+  <div class="fg">
+    <label>Преамбула КП №2 (цена +2%)</label>
+    <textarea id="preambule-1" rows="3" oninput="onFormInput()"></textarea>
+  </div>
+  <div class="fg">
+    <label>Преамбула КП №3 (цена +4%)</label>
+    <textarea id="preambule-2" rows="3" oninput="onFormInput()"></textarea>
   </div>
 </div>
 
@@ -504,7 +536,6 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
   <div class="sec-head">
     <div class="sec-title"><span class="step">7</span><h2>Предпросмотр КП</h2></div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-secondary btn-sm" onclick="openEmailSettings()">✉ Email-настройки</button>
       <button class="btn btn-secondary btn-sm" onclick="refreshPreview()">↻ Обновить</button>
     </div>
   </div>
@@ -514,9 +545,8 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
     <button class="ptab" id="ptab-2" onclick="showPreview(2)">КП №3 (+4%)</button>
   </div>
   <div class="send-strip">
-    <span class="send-strip-label">Отправить с адреса:</span>
-    <span class="email-chip" id="active-sender-chip">не настроено</span>
-    <button class="regen-btn" id="active-regen-btn" onclick="regenerateActiveSenderEmail()" title="Сгенерировать новый уникальный адрес для этого КП" style="display:none">↻ Новый адрес</button>
+    <span class="send-strip-label">Отправить с аккаунта:</span>
+    <span class="email-chip" id="active-sender-chip">—</span>
     <button class="btn btn-primary btn-sm" onclick="openSendModal()">Отправить КП</button>
   </div>
   <div class="preview-wrap">
@@ -644,31 +674,33 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 <div class="modal-overlay" id="send-modal" onclick="if(event.target===this)closeSendModal()">
   <div class="modal-box">
     <div class="modal-title" id="send-modal-title">Отправить КП</div>
-    <div class="modal-sub">КП будет отправлено заказчику как HTML-письмо с полным оформлением.</div>
 
-    <div class="fg" style="margin-bottom:14px">
-      <label>От кого (уникальный адрес отправителя)</label>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="email-chip" id="send-from-addr" style="flex:1">—</span>
-        <button class="regen-btn" id="send-regen-btn" onclick="regenerateActiveSenderEmail(true)" title="Сгенерировать новый адрес">↻</button>
-      </div>
+    <div style="background:#f0f7ff;border:1.5px solid #c2daf8;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;line-height:1.8">
+      📤 <b>Аккаунт отправителя:</b> <span class="email-chip" id="send-from-addr">—</span><br>
+      Войдите в этот аккаунт на <a href="https://e.mail.ru" target="_blank" rel="noopener" style="color:#0071e3">e.mail.ru</a> перед отправкой
     </div>
+
     <div class="fg" style="margin-bottom:14px">
       <label>Кому (email заказчика)</label>
       <input type="email" id="send-to" placeholder="director@school.ru">
     </div>
     <div class="fg" style="margin-bottom:14px">
       <label>Тема письма</label>
-      <input type="text" id="send-subject" placeholder="КП-250517-001 — Коммерческое предложение">
+      <input type="text" id="send-subject" placeholder="Коммерческое предложение">
     </div>
-    <div class="fg">
+    <div class="fg" style="margin-bottom:14px">
       <label>Сопроводительное сообщение (необязательно)</label>
       <textarea id="send-note" rows="3" placeholder="Уважаемый руководитель, направляем Вам наше коммерческое предложение..."></textarea>
     </div>
 
+    <div style="background:#f5f5f7;border-radius:8px;padding:10px 14px;font-size:11.5px;color:#666;line-height:1.7;margin-bottom:4px">
+      <b>Как работает:</b> КП скачается как HTML-файл → откроется Mail.ru с готовым письмом → прикрепите файл скрепкой и нажмите «Отправить»
+    </div>
+
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeSendModal()">Отмена</button>
-      <button class="btn btn-primary" id="send-submit-btn" onclick="doSendKPEmail()">Отправить</button>
+      <button class="btn btn-secondary" onclick="sendKP(false)">⬇ Только скачать</button>
+      <button class="btn btn-primary" id="send-submit-btn" onclick="sendKP(true)">📤 Скачать и открыть Mail.ru</button>
     </div>
   </div>
 </div>
@@ -693,7 +725,11 @@ let logoBase64 = null;
 let productPhotos = {}; // { rowIndex: base64 }
 let activePvIdx = 0;
 
-const DEFAULT_PREAMBULE = 'Уважаемый руководитель! Предлагаем Вам рассмотреть наше коммерческое предложение на поставку школьной мебели. Мы готовы обеспечить высокое качество продукции, своевременную доставку и профессиональную сборку в установленные сроки.';
+const DEFAULT_PREAMBULES = [
+  'Уважаемый руководитель! Предлагаем Вам рассмотреть коммерческое предложение на поставку школьной мебели. Цены указаны с учётом НДС. Готовы обсудить условия, сроки и порядок оплаты, удобные для Вашего учреждения.',
+  'Уважаемый руководитель! Направляем коммерческое предложение на поставку школьной мебели. Вся продукция сертифицирована, соответствует требованиям СанПиН и ГОСТ. Предоставляем полный пакет документов для бухгалтерии и закупочных процедур.',
+  'Уважаемый руководитель! Предлагаем Вам комплексное решение по оснащению учебных помещений школьной мебелью. Организуем доставку до объекта, разгрузку и расстановку мебели по кабинетам. Гарантийный срок — 12 месяцев с даты поставки.'
+];
 
 // ═══════════════════════════════════════════════
 // UTILITIES
@@ -737,13 +773,8 @@ function gv(id) {
 // ═══════════════════════════════════════════════
 
 function generateKPNumber() {
-  const dateVal = gv('c-date') || todayISO();
-  const [y, m, d] = dateVal.split('-');
-  const datePart = y.slice(2) + m + d;
-  const key = 'kp_cnt_' + datePart;
-  let cnt = parseInt(localStorage.getItem(key) || '0') + 1;
-  localStorage.setItem(key, cnt);
-  document.getElementById('kp-number').value = 'КП-' + datePart + '-' + String(cnt).padStart(3, '0');
+  const num = Math.floor(100000 + Math.random() * 900000);
+  document.getElementById('kp-number').value = 'КП-' + num;
   onFormInput();
 }
 
@@ -1107,9 +1138,37 @@ function removeLogo(e) {
 
 function addProduct() {
   const idx = products.length;
-  products.push({ name: '', unit: 'шт', qty: 1, price: 0, vat: 'none' });
+  const vat = gv('global-vat') || 'none';
+  products.push({ name: '', unit: 'шт', qty: 1, price: 0, vat });
   appendProductRow(idx);
   calculateAll();
+}
+
+function toggleVATMenu() {
+  const btn  = document.getElementById('vat-dropdown-btn');
+  const menu = document.getElementById('vat-dropdown-menu');
+  const open = menu.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+
+function setGlobalVAT(vat) {
+  document.getElementById('global-vat').value = vat;
+  const labels = { none: 'Без НДС', '5': 'НДС 5%', '10': 'НДС 10%', '20': 'НДС 20%', '22': 'НДС 22%' };
+  const labelEl = document.getElementById('vat-label');
+  if (labelEl) labelEl.textContent = labels[vat] || 'Без НДС';
+  document.querySelectorAll('#vat-dropdown-menu .vat-dropdown-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.vat === vat);
+  });
+  // Закрыть меню
+  document.getElementById('vat-dropdown-menu').classList.remove('open');
+  document.getElementById('vat-dropdown-btn').classList.remove('open');
+  products.forEach(p => { p.vat = vat; });
+  calculateAll();
+  onFormInput();
+}
+
+function applyGlobalVAT() {
+  setGlobalVAT(gv('global-vat') || 'none');
 }
 
 function deleteProduct(idx) {
@@ -1152,15 +1211,6 @@ function appendProductRow(idx) {
     </td>
     <td class="col-price">
       <input type="number" min="0" step="0.01" value="${p.price}" oninput="products[${idx}].price=parseFloat(this.value)||0;calculateAll()">
-    </td>
-    <td class="col-vat">
-      <select onchange="products[${idx}].vat=this.value;calculateAll()">
-        <option value="none" ${p.vat==='none'?'selected':''}>Без НДС</option>
-        <option value="5" ${p.vat==='5'?'selected':''}>НДС 5%</option>
-        <option value="10" ${p.vat==='10'?'selected':''}>НДС 10%</option>
-        <option value="20" ${p.vat==='20'?'selected':''}>НДС 20%</option>
-        <option value="22" ${p.vat==='22'?'selected':''}>НДС 22%</option>
-      </select>
     </td>
     <td class="col-sum" id="rs-${idx}">0,00 руб.</td>
     <td class="col-del"><button class="del-btn" onclick="deleteProduct(${idx})" title="Удалить">×</button></td>
@@ -1253,9 +1303,10 @@ function getFormData() {
   return {
     customer: { inn: gv('c-inn'), name: gv('c-name'), address: gv('c-address'), contact: gv('c-contact'), date: gv('c-date'), validUntil: gv('c-valid') },
     kpNumber: gv('kp-number'),
-    preambule: gv('preambule'),
+    preambules: [0, 1, 2].map(i => gv('preambule-' + i)),
     delivery: gv('delivery-text'),
     assembly: gv('assembly'),
+    globalVat: gv('global-vat') || 'none',
     suppliers: [0, 1, 2].map(i => readSupplier(i))
   };
 }
@@ -1280,7 +1331,7 @@ function getKPData(kpIdx, markup) {
     dateStr:     fmtDate(fd.customer.date) || '__.__.____',
     validStr:    fmtDate(fd.customer.validUntil) || '—',
     assemblyTxt: fd.assembly === 'included' ? 'Включена в стоимость' : 'Оплачивается отдельно',
-    delivery: fd.delivery, preambule: fd.preambule, logo: logoBase64,
+    delivery: fd.delivery, preambule: fd.preambules[kpIdx], logo: logoBase64,
     rows, kpTotal: r2(kpTotal), kpVAT: r2(kpVAT),
     hasVAT: products.some(p => p.vat !== 'none')
   };
@@ -1670,9 +1721,14 @@ function applyState(state) {
   document.getElementById('c-date').value = c.date || '';
   document.getElementById('c-valid').value = c.validUntil || '';
   if (state.kpNumber) document.getElementById('kp-number').value = state.kpNumber;
-  document.getElementById('preambule').value = state.preambule || DEFAULT_PREAMBULE;
+  [0, 1, 2].forEach(i => {
+    document.getElementById('preambule-' + i).value =
+      (state.preambules && state.preambules[i]) ||
+      DEFAULT_PREAMBULES[i];
+  });
   document.getElementById('delivery-text').value = state.delivery || '';
   document.getElementById('assembly').value = state.assembly || 'included';
+  setGlobalVAT(state.globalVat || 'none');
   if (state.suppliers) state.suppliers.forEach((s, i) => fillSupplier(i, s));
   if (state.products) { products = state.products; productPhotos = {}; rebuildTable(); }
   if (state.logo) {
@@ -1718,8 +1774,9 @@ function clearFormConfirm() {
   ['c-inn','c-name','c-address','c-contact','c-date','c-valid','kp-number','delivery-text'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
-  document.getElementById('preambule').value = DEFAULT_PREAMBULE;
+  [0, 1, 2].forEach(i => { document.getElementById('preambule-' + i).value = DEFAULT_PREAMBULES[i]; });
   document.getElementById('assembly').value = 'included';
+  setGlobalVAT('none');
   [0, 1, 2].forEach(i => fillSupplier(i, {}));
 
   document.getElementById('logo-placeholder').style.display = 'block';
@@ -1870,6 +1927,8 @@ function parseKPFromRows(rows) {
 
   products = imported;
   productPhotos = {};
+  // Синхронизируем глобальный НДС с первым распознанным значением
+  if (imported.length > 0) setGlobalVAT(imported[0].vat || 'none');
   rebuildTable();
   calculateAll();
   showLoadToast(`Импортировано ${imported.length} позиций из Excel`);
@@ -1947,27 +2006,11 @@ function getOrCreateSenderEmail(kpIdx) {
   return cfg.senderEmails[kpIdx] || '';
 }
 
-function regenerateActiveSenderEmail(updateModalToo) {
-  const cfg = loadEmailCfg();
-  if (!cfg.domain) { alert('Укажите домен в настройках email.'); return; }
-  if (!cfg.senderEmails) cfg.senderEmails = ['', '', ''];
-  cfg.senderEmails[activePvIdx] = `kp${activePvIdx + 1}-${randPart()}@${cfg.domain}`;
-  saveEmailCfg(cfg);
-  updateSendStrip();
-  if (updateModalToo) {
-    const el = document.getElementById('send-from-addr');
-    if (el) el.textContent = cfg.senderEmails[activePvIdx];
-  }
-}
 
 function updateSendStrip() {
-  const cfg = loadEmailCfg();
-  const addr = getOrCreateSenderEmail(activePvIdx);
+  const EMAILS = ['mebel_torg1605@bk.ru', 'opt2309@mail.ru', 'parta_opt@mail.ru'];
   const chip = document.getElementById('active-sender-chip');
-  const regenBtn = document.getElementById('active-regen-btn');
-  if (chip) chip.textContent = addr || 'не настроено';
-  const canRegen = cfg.domain && cfg.provider !== 'yandex';
-  if (regenBtn) regenBtn.style.display = canRegen ? '' : 'none';
+  if (chip) chip.textContent = EMAILS[activePvIdx] || '—';
 }
 
 function openEmailSettings() {
@@ -2055,26 +2098,11 @@ function saveEmailSettings() {
 }
 
 function openSendModal() {
-  const cfg = loadEmailCfg();
-  const isYandex = cfg.provider === 'yandex';
-  const ejsAcc = cfg.ejsAccounts && cfg.ejsAccounts[activePvIdx];
-  const ready = isYandex
-    ? (ejsAcc && ejsAcc.publicKey && ejsAcc.serviceId && ejsAcc.templateId)
-    : cfg.apiKey;
-
-  if (!ready) {
-    if (confirm('Для отправки email необходимо настроить аккаунты.\nОткрыть настройки?')) openEmailSettings();
-    return;
-  }
-
   const labels = ['КП №1 (базовая цена)', 'КП №2 (+2%)', 'КП №3 (+4%)'];
   document.getElementById('send-modal-title').textContent = 'Отправить ' + labels[activePvIdx];
 
-  const addr = getOrCreateSenderEmail(activePvIdx);
-  const addrEl = document.getElementById('send-from-addr');
-  if (addrEl) addrEl.textContent = addr || '—';
-  const regenBtn = document.getElementById('send-regen-btn');
-  if (regenBtn) regenBtn.style.display = (cfg.domain && !isYandex) ? '' : 'none';
+  const EMAILS = ['mebel_torg1605@bk.ru', 'opt2309@mail.ru', 'parta_opt@mail.ru'];
+  document.getElementById('send-from-addr').textContent = EMAILS[activePvIdx] || '—';
 
   const supName = gv('s' + activePvIdx + '-name') || 'Поставщик';
   const kpNum = gv('kp-number') || '';
@@ -2090,94 +2118,70 @@ function closeSendModal() {
   document.getElementById('send-modal').classList.remove('open');
 }
 
-async function doSendKPEmail() {
-  const cfg = loadEmailCfg();
-  const isYandex = cfg.provider === 'yandex';
+function sendKP(openMailRu) {
+  const kpIdx = activePvIdx;
+  const EMAILS = ['mebel_torg1605@bk.ru', 'opt2309@mail.ru', 'parta_opt@mail.ru'];
+  const fromEmail = EMAILS[kpIdx];
+  const supName = gv('s' + kpIdx + '-name') || 'Поставщик';
+  const kpNum = gv('kp-number') || 'КП';
+  const subject = document.getElementById('send-subject').value.trim() || kpNum + ' — Коммерческое предложение';
+  const note = document.getElementById('send-note').value.trim();
 
-  if (isYandex) {
-    const acc = cfg.ejsAccounts && cfg.ejsAccounts[activePvIdx];
-    if (!acc || !acc.publicKey || !acc.serviceId || !acc.templateId) {
-      alert(`Для КП №${activePvIdx + 1} не заполнены данные EmailJS.\nОткройте Email-настройки.`);
-      return;
-    }
-  } else if (!cfg.apiKey) {
-    alert('API-ключ не настроен.');
+  // Валидация получателя нужна только при открытии Mail.ru
+  const toEmail = document.getElementById('send-to').value.trim();
+  if (openMailRu && (!toEmail || !toEmail.includes('@'))) {
+    alert('Укажите корректный email получателя.');
     return;
   }
 
-  const toEmail = document.getElementById('send-to').value.trim();
-  if (!toEmail || !toEmail.includes('@')) { alert('Укажите корректный email получателя.'); return; }
-
-  const fromEmail = getOrCreateSenderEmail(activePvIdx);
-  if (!fromEmail) { alert('Адрес отправителя не настроен.\nОткройте Email-настройки.'); return; }
-
-  const supName = gv('s' + activePvIdx + '-name') || 'Поставщик';
-  const subject = document.getElementById('send-subject').value.trim() || 'Коммерческое предложение';
-  const note = document.getElementById('send-note').value.trim();
+  // Генерируем полный HTML КП (с фото, со стилями)
   const markups = [0, 0.02, 0.04];
-  const kpHtml = buildKPHTML(activePvIdx, markups[activePvIdx]);
+  const kpHtml = buildKPHTML(kpIdx, markups[kpIdx]);
+  const fullHtml = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(subject)}</title>
+<style>body{margin:0;padding:20px;background:#e8e4f0;font-family:Arial,sans-serif}</style>
+</head>
+<body>${kpHtml}</body>
+</html>`;
 
-  const noteBlock = note
-    ? `<div style="max-width:780px;margin:0 auto 20px;background:#fff;border-radius:8px;padding:20px 24px;font-size:14px;line-height:1.7;font-family:Arial,sans-serif;">${note.replace(/\n/g, '<br>')}</div>`
-    : '';
-  const emailHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:20px;background:#e8e4f0;">${noteBlock}${kpHtml}</body></html>`;
+  // Скачиваем файл
+  const safeNum = kpNum.replace(/[^а-яёА-ЯЁa-zA-Z0-9_-]/g, '_');
+  const fileName = safeNum + '_КП' + (kpIdx + 1) + '.html';
+  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+  const fileUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = fileUrl;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(fileUrl);
 
-  const btn = document.getElementById('send-submit-btn');
-  btn.disabled = true;
-  btn.textContent = 'Отправляю…';
-
-  try {
-    if (cfg.provider === 'yandex') {
-      // Отправка через EmailJS
-      if (!window.emailjs) {
-        await new Promise((res, rej) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-          s.onload = res;
-          s.onerror = () => rej(new Error('Не удалось загрузить EmailJS — проверьте интернет'));
-          document.head.appendChild(s);
-        });
-      }
-      const acc = cfg.ejsAccounts[activePvIdx];
-      // Убираем base64-изображения чтобы не превысить лимит размера письма
-      const emailBody = emailHtml.replace(/src="data:[^"]+"/g, 'src=""');
-      await emailjs.send(
-        acc.serviceId,
-        acc.templateId,
-        { to_email: toEmail, from_name: supName, subject: subject, html_content: emailBody },
-        { publicKey: acc.publicKey }
-      );
-    } else {
-      let response;
-      if (cfg.provider === 'mailjet') {
-        const parts = (cfg.apiKey || ':').split(':');
-        response = await fetch('https://api.mailjet.com/v3.1/send', {
-          method: 'POST',
-          headers: { 'Authorization': 'Basic ' + btoa(parts[0] + ':' + (parts[1] || '')), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ Messages: [{ From: { Email: fromEmail, Name: supName }, To: [{ Email: toEmail }], Subject: subject, HTMLPart: emailHtml }] })
-        });
-      } else {
-        response = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + cfg.apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ from: `${supName} <${fromEmail}>`, to: [toEmail], subject, html: emailHtml })
-        });
-      }
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || err.name || `HTTP ${response.status}`);
-      }
-    }
-
+  if (!openMailRu) {
     closeSendModal();
-    showLoadToast(`КП отправлено → ${toEmail}`);
-    updateSendStrip();
-  } catch (e) {
-    alert('Ошибка отправки:\n' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Отправить';
+    showLoadToast('КП скачан: ' + fileName);
+    return;
   }
+
+  // Формируем текст письма
+  const bodyText = (note ? note + '\n\n' : '') +
+    'Уважаемый руководитель,\n\n' +
+    'Во вложении — Коммерческое предложение на поставку школьной мебели (файл ' + fileName + ').\n\n' +
+    'С уважением,\n' + supName;
+
+  // Открываем Mail.ru compose с заполненными полями
+  const composeUrl = 'https://e.mail.ru/compose/?' +
+    'to=' + encodeURIComponent(toEmail) +
+    '&subject=' + encodeURIComponent(subject) +
+    '&body=' + encodeURIComponent(bodyText);
+
+  window.open(composeUrl, '_blank');
+  closeSendModal();
+  showLoadToast('Файл «' + fileName + '» скачан — прикрепите его в открывшейся вкладке Mail.ru (скрепка) и нажмите «Отправить»');
 }
 
 // ═══════════════════════════════════════════════
@@ -2189,7 +2193,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const valid = new Date();
   valid.setDate(valid.getDate() + 30);
   document.getElementById('c-valid').value = valid.toISOString().slice(0, 10);
-  document.getElementById('preambule').value = DEFAULT_PREAMBULE;
+  [0, 1, 2].forEach(i => { document.getElementById('preambule-' + i).value = DEFAULT_PREAMBULES[i]; });
 
   refreshSavedSelects();
   generateKPNumber();
@@ -2210,6 +2214,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (products.length === 0) addProduct();
   calculateAll();
+
+  document.addEventListener('click', e => {
+    const dd = document.getElementById('vat-dropdown');
+    if (dd && !dd.contains(e.target)) {
+      document.getElementById('vat-dropdown-menu').classList.remove('open');
+      document.getElementById('vat-dropdown-btn').classList.remove('open');
+    }
+  });
 });
 
 </script>
