@@ -201,6 +201,9 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
 /* Print */
 #print-area { display: none; }
 
+@page {
+  margin: 0;
+}
 @media print {
   body > *:not(#print-area) { display: none !important; }
   #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
