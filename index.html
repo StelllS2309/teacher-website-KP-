@@ -428,17 +428,37 @@ table.pt input, table.pt select { padding: 7px 8px; font-size: 13px; border-radi
   <div class="sec-head">
     <div class="sec-title"><span class="step">4</span><h2>Таблица товаров</h2></div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <div class="vat-dropdown" id="vat-dropdown">
-        <button class="vat-dropdown-btn" id="vat-dropdown-btn" onclick="toggleVATMenu()">
-          НДС: <span id="vat-label">Без НДС</span>
-          <span class="vat-arrow">▼</span>
-        </button>
-        <div class="vat-dropdown-menu" id="vat-dropdown-menu">
-          <button class="vat-dropdown-item active" data-vat="none" onclick="setGlobalVAT('none')">Без НДС</button>
-          <button class="vat-dropdown-item" data-vat="5"  onclick="setGlobalVAT('5')">НДС 5%</button>
-          <button class="vat-dropdown-item" data-vat="10" onclick="setGlobalVAT('10')">НДС 10%</button>
-          <button class="vat-dropdown-item" data-vat="20" onclick="setGlobalVAT('20')">НДС 20%</button>
-          <button class="vat-dropdown-item" data-vat="22" onclick="setGlobalVAT('22')">НДС 22%</button>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:600;color:var(--muted)">НДС:</span>
+        <div class="vat-dropdown" id="vat-dropdown-0">
+          <button class="vat-dropdown-btn" id="vat-dropdown-btn-0" onclick="toggleVATMenu(0)">КП №1: <span id="vat-label-0">Без НДС</span> <span class="vat-arrow">▼</span></button>
+          <div class="vat-dropdown-menu" id="vat-dropdown-menu-0">
+            <button class="vat-dropdown-item active" data-vat="none" onclick="setKPVAT(0,'none')">Без НДС</button>
+            <button class="vat-dropdown-item" data-vat="5"  onclick="setKPVAT(0,'5')">НДС 5%</button>
+            <button class="vat-dropdown-item" data-vat="10" onclick="setKPVAT(0,'10')">НДС 10%</button>
+            <button class="vat-dropdown-item" data-vat="20" onclick="setKPVAT(0,'20')">НДС 20%</button>
+            <button class="vat-dropdown-item" data-vat="22" onclick="setKPVAT(0,'22')">НДС 22%</button>
+          </div>
+        </div>
+        <div class="vat-dropdown" id="vat-dropdown-1">
+          <button class="vat-dropdown-btn" id="vat-dropdown-btn-1" onclick="toggleVATMenu(1)">КП №2: <span id="vat-label-1">Без НДС</span> <span class="vat-arrow">▼</span></button>
+          <div class="vat-dropdown-menu" id="vat-dropdown-menu-1">
+            <button class="vat-dropdown-item active" data-vat="none" onclick="setKPVAT(1,'none')">Без НДС</button>
+            <button class="vat-dropdown-item" data-vat="5"  onclick="setKPVAT(1,'5')">НДС 5%</button>
+            <button class="vat-dropdown-item" data-vat="10" onclick="setKPVAT(1,'10')">НДС 10%</button>
+            <button class="vat-dropdown-item" data-vat="20" onclick="setKPVAT(1,'20')">НДС 20%</button>
+            <button class="vat-dropdown-item" data-vat="22" onclick="setKPVAT(1,'22')">НДС 22%</button>
+          </div>
+        </div>
+        <div class="vat-dropdown" id="vat-dropdown-2">
+          <button class="vat-dropdown-btn" id="vat-dropdown-btn-2" onclick="toggleVATMenu(2)">КП №3: <span id="vat-label-2">Без НДС</span> <span class="vat-arrow">▼</span></button>
+          <div class="vat-dropdown-menu" id="vat-dropdown-menu-2">
+            <button class="vat-dropdown-item active" data-vat="none" onclick="setKPVAT(2,'none')">Без НДС</button>
+            <button class="vat-dropdown-item" data-vat="5"  onclick="setKPVAT(2,'5')">НДС 5%</button>
+            <button class="vat-dropdown-item" data-vat="10" onclick="setKPVAT(2,'10')">НДС 10%</button>
+            <button class="vat-dropdown-item" data-vat="20" onclick="setKPVAT(2,'20')">НДС 20%</button>
+            <button class="vat-dropdown-item" data-vat="22" onclick="setKPVAT(2,'22')">НДС 22%</button>
+          </div>
         </div>
         <input type="hidden" id="global-vat" value="none">
       </div>
@@ -724,6 +744,7 @@ let products = [];
 let logoBase64 = null;
 let productPhotos = {}; // { rowIndex: base64 }
 let activePvIdx = 0;
+let vatPerKP = ['none', 'none', 'none'];
 
 const DEFAULT_PREAMBULES = [
   'Уважаемый руководитель! Предлагаем Вам рассмотреть коммерческое предложение на поставку школьной мебели. Цены указаны с учётом НДС. Готовы обсудить условия, сроки и порядок оплаты, удобные для Вашего учреждения.',
@@ -1138,38 +1159,39 @@ function removeLogo(e) {
 
 function addProduct() {
   const idx = products.length;
-  const vat = gv('global-vat') || 'none';
-  products.push({ name: '', unit: 'шт', qty: 1, price: 0, vat });
+  products.push({ name: '', unit: 'шт', qty: 1, price: 0, vat: 'none' });
   appendProductRow(idx);
   calculateAll();
 }
 
-function toggleVATMenu() {
-  const btn  = document.getElementById('vat-dropdown-btn');
-  const menu = document.getElementById('vat-dropdown-menu');
+const VAT_LABELS = { none: 'Без НДС', '5': 'НДС 5%', '10': 'НДС 10%', '20': 'НДС 20%', '22': 'НДС 22%' };
+
+function toggleVATMenu(kpIdx) {
+  [0, 1, 2].forEach(i => {
+    if (i !== kpIdx) {
+      document.getElementById('vat-dropdown-menu-' + i).classList.remove('open');
+      document.getElementById('vat-dropdown-btn-' + i).classList.remove('open');
+    }
+  });
+  const btn  = document.getElementById('vat-dropdown-btn-' + kpIdx);
+  const menu = document.getElementById('vat-dropdown-menu-' + kpIdx);
   const open = menu.classList.toggle('open');
   btn.classList.toggle('open', open);
 }
 
-function setGlobalVAT(vat) {
-  document.getElementById('global-vat').value = vat;
-  const labels = { none: 'Без НДС', '5': 'НДС 5%', '10': 'НДС 10%', '20': 'НДС 20%', '22': 'НДС 22%' };
-  const labelEl = document.getElementById('vat-label');
-  if (labelEl) labelEl.textContent = labels[vat] || 'Без НДС';
-  document.querySelectorAll('#vat-dropdown-menu .vat-dropdown-item').forEach(btn => {
+function setKPVAT(kpIdx, vat) {
+  vatPerKP[kpIdx] = vat;
+  document.getElementById('vat-label-' + kpIdx).textContent = VAT_LABELS[vat] || 'Без НДС';
+  document.querySelectorAll('#vat-dropdown-menu-' + kpIdx + ' .vat-dropdown-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.vat === vat);
   });
-  // Закрыть меню
-  document.getElementById('vat-dropdown-menu').classList.remove('open');
-  document.getElementById('vat-dropdown-btn').classList.remove('open');
-  products.forEach(p => { p.vat = vat; });
+  document.getElementById('vat-dropdown-menu-' + kpIdx).classList.remove('open');
+  document.getElementById('vat-dropdown-btn-' + kpIdx).classList.remove('open');
   calculateAll();
   onFormInput();
 }
 
-function applyGlobalVAT() {
-  setGlobalVAT(gv('global-vat') || 'none');
-}
+function applyGlobalVAT() { /* не используется */ }
 
 function deleteProduct(idx) {
   products.splice(idx, 1);
@@ -1250,15 +1272,16 @@ function rowVAT(sum, vat) {
   return r2(sum * rate / (100 + rate));
 }
 
-function calcKP(markup) {
-  let total = 0, vat = 0, qty = 0;
+function calcKP(kpIdx, markup) {
+  const vat = vatPerKP[kpIdx] || 'none';
+  let total = 0, vatSum = 0, qty = 0;
   products.forEach(p => {
     const s = rowSum(p, markup);
     total += s;
-    vat += rowVAT(s, p.vat);
+    vatSum += rowVAT(s, vat);
     qty += (p.qty || 0);
   });
-  return { total: r2(total), vat: r2(vat), count: products.length, qty: Math.round(qty) };
+  return { total: r2(total), vat: r2(vatSum), count: products.length, qty: Math.round(qty) };
 }
 
 function calculateAll() {
@@ -1267,7 +1290,7 @@ function calculateAll() {
     if (el) el.textContent = fmtMoney(rowSum(p, 0));
   });
 
-  const kp1 = calcKP(0), kp2 = calcKP(0.02), kp3 = calcKP(0.04);
+  const kp1 = calcKP(0, 0), kp2 = calcKP(1, 0.02), kp3 = calcKP(2, 0.04);
   document.getElementById('table-total').textContent = fmtMoney(kp1.total);
 
   [[kp1, 1], [kp2, 2], [kp3, 3]].forEach(([kp, n]) => {
@@ -1306,7 +1329,7 @@ function getFormData() {
     preambules: [0, 1, 2].map(i => gv('preambule-' + i)),
     delivery: gv('delivery-text'),
     assembly: gv('assembly'),
-    globalVat: gv('global-vat') || 'none',
+    vatPerKP: [...vatPerKP],
     suppliers: [0, 1, 2].map(i => readSupplier(i))
   };
 }
@@ -1317,13 +1340,14 @@ function getKPData(kpIdx, markup) {
   const sup = fd.suppliers[kpIdx];
   const kpNum = fd.kpNumber ? fd.kpNumber + (kpIdx > 0 ? '/' + (kpIdx + 1) : '') : '—';
   let kpTotal = 0, kpVAT = 0;
+  const kpVatRate = vatPerKP[kpIdx] || 'none';
   const rows = products.map((p, i) => {
     const price = rowPrice(p, markup);
     const sum   = rowSum(p, markup);
-    const vat   = rowVAT(sum, p.vat);
+    const vat   = rowVAT(sum, kpVatRate);
     kpTotal += sum; kpVAT += vat;
     return { n: i+1, name: p.name||'—', unit: p.unit, qty: p.qty,
-      price, vatLabel: p.vat==='none' ? 'Без НДС' : 'НДС '+p.vat+'%',
+      price, vatLabel: kpVatRate === 'none' ? 'Без НДС' : 'НДС ' + kpVatRate + '%',
       sum, photo: productPhotos[i]||null };
   });
   return {
@@ -1333,7 +1357,7 @@ function getKPData(kpIdx, markup) {
     assemblyTxt: fd.assembly === 'included' ? 'Включена в стоимость' : 'Оплачивается отдельно',
     delivery: fd.delivery, preambule: fd.preambules[kpIdx], logo: logoBase64,
     rows, kpTotal: r2(kpTotal), kpVAT: r2(kpVAT),
-    hasVAT: products.some(p => p.vat !== 'none')
+    hasVAT: kpVatRate !== 'none'
   };
 }
 
@@ -1728,7 +1752,8 @@ function applyState(state) {
   });
   document.getElementById('delivery-text').value = state.delivery || '';
   document.getElementById('assembly').value = state.assembly || 'included';
-  setGlobalVAT(state.globalVat || 'none');
+  const savedVat = state.vatPerKP || (state.globalVat ? [state.globalVat, state.globalVat, state.globalVat] : ['none','none','none']);
+  [0, 1, 2].forEach(i => setKPVAT(i, savedVat[i] || 'none'));
   if (state.suppliers) state.suppliers.forEach((s, i) => fillSupplier(i, s));
   if (state.products) { products = state.products; productPhotos = {}; rebuildTable(); }
   if (state.logo) {
@@ -1776,7 +1801,7 @@ function clearFormConfirm() {
   });
   [0, 1, 2].forEach(i => { document.getElementById('preambule-' + i).value = DEFAULT_PREAMBULES[i]; });
   document.getElementById('assembly').value = 'included';
-  setGlobalVAT('none');
+  [0, 1, 2].forEach(i => setKPVAT(i, 'none'));
   [0, 1, 2].forEach(i => fillSupplier(i, {}));
 
   document.getElementById('logo-placeholder').style.display = 'block';
@@ -1928,7 +1953,7 @@ function parseKPFromRows(rows) {
   products = imported;
   productPhotos = {};
   // Синхронизируем глобальный НДС с первым распознанным значением
-  if (imported.length > 0) setGlobalVAT(imported[0].vat || 'none');
+  if (imported.length > 0) { const v = imported[0].vat || 'none'; [0,1,2].forEach(i => setKPVAT(i, v)); }
   rebuildTable();
   calculateAll();
   showLoadToast(`Импортировано ${imported.length} позиций из Excel`);
